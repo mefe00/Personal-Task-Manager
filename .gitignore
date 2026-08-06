@@ -17,6 +17,16 @@ dist-ssr
 .env.*
 !.env.example
 
+# Phase documentation, AI reports, and SQL setup scripts (not part of the published project)
+00_MASTER_PLAN_AND_RULES.md
+0[1-9]_PHASE_*.md
+10_PHASE_*.md
+AI_REPORT_PHASE_*.md
+supabase_schema.sql
+phase6_sql_updates.sql
+phase7_sql_updates.sql
+cron_notifications_setup.sql
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
