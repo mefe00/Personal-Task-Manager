@@ -32,6 +32,18 @@ A modern, high-performance **Personal ERP and Advanced Task Manager** built for 
 - "Publish to Portfolio" webhook for completed projects
 - Clickable glassmorphic project cards with cover-image banners
 
+### 🏗️ Kanban Boards & Priority / Tags
+- **Trello-style Kanban board** toggle on each project's details page (`List ↔ Board`)
+- Drag-and-drop cards between **Todo / In Progress / Done** columns (`@hello-pangea/dnd`) — `kanban_status` syncs instantly to Supabase
+- **Priority flags** on tasks: `low` (green), `medium` (amber), `high` (red)
+- **Tag badges** (`tags` text array) with comma-separated editing in the task modal
+- **TaskEditorModal** for both create and edit flows (title, priority, tags, due date, time slot)
+
+### ✍️ Rich-Text Task Descriptions
+- Notion-style rich-text editor powered by **Tiptap** (`@tiptap/react` + StarterKit) for task descriptions
+- Supports **headings, bullet/ordered lists, code blocks, bold/italic/underline**, and more
+- Descriptions stored in the `description` column and rendered live in the TaskView
+
 ### 📊 Dashboard Analytics
 - Task density bar chart (last 7 days) with Recharts
 - Task status donut chart (completed vs pending)
@@ -63,6 +75,9 @@ A modern, high-performance **Personal ERP and Advanced Task Manager** built for 
 | **Routing** | React Router DOM v6 |
 | **Charts** | Recharts |
 | **Backend** | Supabase (PostgreSQL, Auth, Storage, RLS, Edge Functions, pg_cron) |
+| **Animations** | Framer Motion |
+| **Drag & Drop** | @hello-pangea/dnd |
+| **Rich Text** | Tiptap (@tiptap/react + StarterKit) |
 | **Deployment** | Netlify (Frontend) & Supabase (Backend) |
 
 ---
@@ -117,6 +132,16 @@ Run the contents of **`phase6_sql_updates.sql`** in the Supabase SQL Editor. Thi
 - Creates the **`time_logs`** table with full RLS policies
 
 > **Note:** You can also create the buckets manually in Dashboard → Storage → New Bucket (set **Public**), then apply the storage policies from `phase6_sql_updates.sql`.
+
+### Step 3b: Enable Kanban Boards, Priority & Tags (Phase 7)
+
+Run the contents of **`phase7_sql_updates.sql`** in the Supabase SQL Editor. This adds three new columns to the `tasks` table and backfills existing rows:
+
+- `kanban_status` (`TEXT DEFAULT 'todo'`) with a `CHECK` constraint (`todo`, `in_progress`, `done`)
+- `priority` (`TEXT DEFAULT 'medium'`) with a `CHECK` constraint (`low`, `medium`, `high`)
+- `tags` (`TEXT[] DEFAULT '{}'`)
+
+> ⚠️ Bu SQL çalıştırılmalı; aksi takdirde Kanban tahtası, öncelik ve etiket özellikleri backend'de çalışmaz.
 
 ### Step 4: Configure Environment Variables
 
