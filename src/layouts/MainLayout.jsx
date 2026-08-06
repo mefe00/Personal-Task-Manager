@@ -3,6 +3,7 @@ import { Outlet, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import Sidebar from '../components/ui/Sidebar'
 import Header from '../components/ui/Header'
+import Stopwatch from '../components/ui/Stopwatch'
 
 /**
  * MainLayout - Dashboard shell combining Sidebar + Header.
@@ -13,7 +14,7 @@ export default function MainLayout() {
   const location = useLocation()
 
   return (
-    <div className="min-h-screen flex bg-gradient-to-br from-slate-100 via-purple-50 to-slate-100 dark:from-slate-900 dark:via-purple-950 dark:to-slate-900">
+    <div className="min-h-screen flex bg-gradient-to-br from-slate-100 via-blue-50 to-slate-100 dark:from-slate-900 dark:via-blue-950 dark:to-slate-900">
       {/* Sidebar */}
       <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
@@ -36,6 +37,9 @@ export default function MainLayout() {
           </AnimatePresence>
         </main>
       </div>
+
+      {/* Floating time-tracking widget */}
+      <Stopwatch />
     </div>
   )
 }

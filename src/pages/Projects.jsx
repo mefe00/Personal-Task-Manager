@@ -1,9 +1,10 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Plus, FolderKanban, GitBranch, Trash2, Pencil, ExternalLink, Loader2, Send } from 'lucide-react'
+import { Plus, FolderKanban, GitBranch, Trash2, Pencil, ExternalLink, Loader2, Send, ImagePlus } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { useProjects } from '../hooks/useProjects'
+import { supabase } from '../lib/supabaseClient'
 import Modal from '../components/ui/Modal'
 import { cn } from '../lib/utils'
 
@@ -21,9 +22,13 @@ export default function Projects() {
   const [editingProject, setEditingProject] = useState(null)
 
   // Form state
-  const [formData, setFormData] = useState({ name: '', description: '', github_repo_url: '' })
+  const [formData, setFormData] = useState({ name: '', description: '', github_repo_url: '', cover_image_url: '', status: 'active' })
   const [formError, setFormError] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  const [uploadingCover, setUploadingCover] = useState(false)
+
+  // Status filter
+  const [statusFilter, setStatusFilter] = useState('all')
 
   // Delete confirmation
   const [deletingId, setDeletingId] = useState(null)
@@ -34,7 +39,7 @@ export default function Projects() {
 
   const openCreateModal = () => {
     setEditingProject(null)
-    setFormData({ name: '', description: '', github_repo_url: '' })
+    setFormData({ name: '', description: '', github_repo_url: '', cover_image_url: '', status: 'active' })
     setFormError('')
     setModalOpen(true)
   }
@@ -46,9 +51,55 @@ export default function Projects() {
       name: project.name,
       description: project.description || '',
       github_repo_url: project.github_repo_url || '',
+      cover_image_url: project.cover_image_url || '',
+      status: project.status || 'active',
     })
     setFormError('')
     setModalOpen(true)
+  }
+
+  /**
+   * Upload a cover image to the `project_covers` storage bucket and
+   * store the public URL in formData.cover_image_url.
+   */
+  const handleCoverUpload = async (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    // Basic client-side validation
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please select an image file')
+      return
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Image must be smaller than 5MB')
+      return
+    }
+
+    setUploadingCover(true)
+    try {
+      const ext = file.name.split('.').pop() || 'png'
+      const fileName = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`
+      const { error: uploadError } = await supabase.storage
+        .from('project_covers')
+        .upload(fileName, file)
+
+      if (uploadError) throw uploadError
+
+      const { data: urlData } = supabase.storage
+        .from('project_covers')
+        .getPublicUrl(fileName)
+
+      setFormData((prev) => ({ ...prev, cover_image_url: urlData.publicUrl }))
+      toast.success('Cover image uploaded!')
+    } catch (err) {
+      console.error('Error uploading cover:', err)
+      toast.error('Failed to upload cover image')
+    } finally {
+      setUploadingCover(false)
+      // Reset input so the same file can be re-selected
+      e.target.value = ''
+    }
   }
 
   const handleSubmit = async (e) => {
@@ -66,6 +117,8 @@ export default function Projects() {
       name: formData.name.trim(),
       description: formData.description.trim() || null,
       github_repo_url: formData.github_repo_url.trim() || null,
+      cover_image_url: formData.cover_image_url.trim() || null,
+      status: formData.status || 'active',
     }
 
     let result
@@ -156,8 +209,13 @@ export default function Projects() {
   const statusColors = {
     active: 'bg-neon-green/20 text-neon-green',
     completed: 'bg-neon-cyan/20 text-neon-cyan',
-    archived: 'bg-slate-500/20 text-slate-500 dark:text-slate-400',
+    on_hold: 'bg-amber-500/20 text-amber-500 dark:text-amber-400',
   }
+
+  // Filter projects by the selected status
+  const filteredProjects = statusFilter === 'all'
+    ? projects
+    : projects.filter((p) => p.status === statusFilter)
 
   return (
     <div>
@@ -168,7 +226,7 @@ export default function Projects() {
             Projects
           </h1>
           <p className="text-slate-600 dark:text-slate-400">
-            Manage your hardware, firmware & web projects
+            Manage your software, design, marketing & web projects
             <span className="text-neon-purple dark:text-neon-cyan"> — Click a project to manage its tasks</span>
           </p>
         </div>
@@ -182,6 +240,31 @@ export default function Projects() {
           <Plus className="w-5 h-5" />
           New Project
         </motion.button>
+      </div>
+
+      {/* Status filter tabs */}
+      <div className="flex flex-wrap gap-2 mb-6">
+        {[
+          { id: 'all', label: 'All' },
+          { id: 'active', label: 'Active' },
+          { id: 'on_hold', label: 'On Hold' },
+          { id: 'completed', label: 'Completed' },
+        ].map((f) => (
+          <motion.button
+            key={f.id}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => setStatusFilter(f.id)}
+            className={cn(
+              'px-4 py-2 rounded-xl text-sm font-medium transition-all',
+              statusFilter === f.id
+                ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-neon'
+                : 'bg-white/40 dark:bg-white/5 border border-white/20 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:bg-white/60 dark:hover:bg-white/10'
+            )}
+          >
+            {f.label}
+          </motion.button>
+        ))}
       </div>
 
       {/* Error state */}
@@ -236,9 +319,15 @@ export default function Projects() {
 
       {/* Projects grid */}
       {!loading && !error && projects.length > 0 && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <>
+          {filteredProjects.length === 0 ? (
+            <div className="text-center py-16 text-slate-500 dark:text-slate-400">
+              No projects match this status filter.
+            </div>
+          ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           <AnimatePresence>
-            {projects.map((project, index) => (
+            {filteredProjects.map((project, index) => (
               <motion.div
                 key={project.id}
                 initial={{ opacity: 0, y: 20 }}
@@ -247,17 +336,29 @@ export default function Projects() {
                 transition={{ delay: index * 0.05, duration: 0.3 }}
                 whileHover={{ y: -5, scale: 1.02 }}
                 onClick={() => navigate(`/projects/${project.id}`)}
-                className="cursor-pointer bg-glass-light dark:bg-glass-dark backdrop-blur-xl border border-white/20 dark:border-white/10 shadow-glass rounded-2xl p-6 flex flex-col transition-shadow hover:shadow-neon"
+                className="cursor-pointer overflow-hidden bg-glass-light dark:bg-glass-dark backdrop-blur-xl border border-white/20 dark:border-white/10 shadow-glass rounded-2xl flex flex-col transition-shadow hover:shadow-neon"
               >
-                {/* Status badge */}
-                <div className="flex items-start justify-between mb-4">
+                {/* Cover image (if any) */}
+                {project.cover_image_url && (
+                  <div className="h-36 w-full overflow-hidden">
+                    <img
+                      src={project.cover_image_url}
+                      alt={`${project.name} cover`}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                )}
+
+                <div className="p-6 flex flex-col flex-1">
+                  {/* Status badge */}
+                  <div className="flex items-start justify-between mb-4">
                   <span
                     className={cn(
                       'px-3 py-1 rounded-full text-xs font-semibold capitalize',
                       statusColors[project.status] || statusColors.active
                     )}
                   >
-                    {project.status}
+                    {project.status === 'on_hold' ? 'On Hold' : project.status}
                   </span>
 
                   {/* Actions */}
@@ -286,24 +387,24 @@ export default function Projects() {
                       )}
                     </motion.button>
                   </div>
-                </div>
+                  </div>
 
-                {/* Project icon */}
-                <div className="flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-neon-purple/20 to-neon-pink/20 text-neon-purple dark:text-neon-cyan mb-4">
-                  <FolderKanban className="w-7 h-7" />
-                </div>
+                  {/* Project icon */}
+                  <div className="flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-neon-purple/20 to-neon-pink/20 text-neon-purple dark:text-neon-cyan mb-4">
+                    <FolderKanban className="w-7 h-7" />
+                  </div>
 
-                {/* Name */}
-                <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2">
-                  {project.name}
-                </h3>
+                  {/* Name */}
+                  <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2">
+                    {project.name}
+                  </h3>
 
-                {/* Description */}
-                <p className="text-sm text-slate-600 dark:text-slate-400 flex-1 mb-4 line-clamp-3">
-                  {project.description || 'No description provided.'}
-                </p>
+                  {/* Description */}
+                  <p className="text-sm text-slate-600 dark:text-slate-400 flex-1 mb-4 line-clamp-3">
+                    {project.description || 'No description provided.'}
+                  </p>
 
-                {/* GitHub link */}
+                  {/* GitHub link */}
                 {project.github_repo_url && (
                   <a
                     href={project.github_repo_url}
@@ -347,10 +448,13 @@ export default function Projects() {
                 <p className="mt-4 text-xs text-slate-500 dark:text-slate-500">
                   Created {new Date(project.created_at).toLocaleDateString()}
                 </p>
+                </div>
               </motion.div>
             ))}
           </AnimatePresence>
         </div>
+        )}
+        </>
       )}
 
       {/* Create/Edit Modal */}
@@ -375,10 +479,62 @@ export default function Projects() {
               type="text"
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              placeholder="e.g. PCB Design v2"
+              placeholder="e.g. Website Redesign"
               required
               className="w-full px-4 py-3 rounded-xl bg-white/50 dark:bg-white/10 border border-white/30 dark:border-white/20 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-neon-purple/50 transition-all"
             />
+          </div>
+
+          {/* Status */}
+          <div>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+              Status
+            </label>
+            <select
+              value={formData.status}
+              onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+              className="w-full px-4 py-3 rounded-xl bg-white/50 dark:bg-white/10 border border-white/30 dark:border-white/20 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-neon-purple/50 transition-all"
+            >
+              <option value="active">Active</option>
+              <option value="on_hold">On Hold</option>
+              <option value="completed">Completed</option>
+            </select>
+          </div>
+
+          {/* Cover image upload */}
+          <div>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+              Cover Image
+            </label>
+            <div className="flex items-center gap-3">
+              <label className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-white/50 dark:bg-white/10 border border-dashed border-white/40 dark:border-white/20 text-sm text-slate-600 dark:text-slate-300 cursor-pointer hover:bg-white/60 dark:hover:bg-white/10 transition-colors">
+                {uploadingCover ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Uploading...
+                  </>
+                ) : (
+                  <>
+                    <ImagePlus className="w-4 h-4" />
+                    {formData.cover_image_url ? 'Change image' : 'Upload image'}
+                  </>
+                )}
+                <input type="file" accept="image/*" onChange={handleCoverUpload} className="hidden" />
+              </label>
+
+              {formData.cover_image_url && (
+                <img
+                  src={formData.cover_image_url}
+                  alt="Cover preview"
+                  className="w-14 h-14 rounded-xl object-cover border border-white/20 dark:border-white/10"
+                />
+              )}
+            </div>
+            {formData.cover_image_url && (
+              <p className="mt-1 text-xs text-slate-500 dark:text-slate-400 break-all">
+                {formData.cover_image_url}
+              </p>
+            )}
           </div>
 
           {/* Description */}

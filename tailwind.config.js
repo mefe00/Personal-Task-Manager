@@ -8,12 +8,12 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Neon accent colors for a young/dynamic feel
+        // Professional Blue/Indigo accent palette
         neon: {
-          cyan: '#22d3ee',
-          purple: '#a855f7',
-          pink: '#ec4899',
-          green: '#34d399',
+          cyan: '#38bdf8',   // Sky-400 (secondary blue accent)
+          purple: '#6366f1', // Indigo-500 (primary accent)
+          pink: '#3b82f6',   // Blue-500 (gradient partner)
+          green: '#10b981',  // Emerald-500 (success)
         },
         // Glassmorphic surface colors
         glass: {
@@ -26,7 +26,7 @@ export default {
       },
       boxShadow: {
         'glass': '0 8px 32px 0 rgba(31, 38, 135, 0.15)',
-        'neon': '0 0 20px rgba(168, 85, 247, 0.3)',
+        'neon': '0 0 24px rgba(59, 130, 246, 0.35)',
       },
       animation: {
         'fade-in': 'fadeIn 0.5s ease-in-out',

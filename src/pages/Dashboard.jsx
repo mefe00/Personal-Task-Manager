@@ -13,12 +13,13 @@ import {
   Cell,
   Legend,
 } from 'recharts'
-import { FolderKanban, CheckCircle2, ListTodo, CalendarClock } from 'lucide-react'
+import { FolderKanban, CheckCircle2, ListTodo, CalendarClock, Timer } from 'lucide-react'
 import { useProjects } from '../hooks/useProjects'
 import { useTasks } from '../hooks/useTasks'
+import { useTimeLogs } from '../hooks/useTimeLogs'
 import { cn } from '../lib/utils'
 
-const PIE_COLORS = ['#34d399', '#a855f7', '#ec4899', '#22d3ee', '#f59e0b']
+const PIE_COLORS = ['#10b981', '#6366f1', '#3b82f6', '#38bdf8', '#f59e0b']
 
 /**
  * Dashboard - Analytics overview with task density charts.
@@ -32,6 +33,40 @@ const PIE_COLORS = ['#34d399', '#a855f7', '#ec4899', '#22d3ee', '#f59e0b']
 export default function Dashboard() {
   const { projects, loading: projectsLoading } = useProjects()
   const { tasks, loading: tasksLoading } = useTasks()
+  const { logs, loading: logsLoading } = useTimeLogs()
+
+  // ============================================================
+  // Monthly hours worked (from time_logs)
+  // ============================================================
+  const monthlyHours = useMemo(() => {
+    const now = new Date()
+    const year = now.getFullYear()
+    const month = now.getMonth()
+
+    // One bucket per day of the current month
+    const map = {}
+    const daysInMonth = new Date(year, month + 1, 0).getDate()
+    for (let d = 1; d <= daysInMonth; d++) {
+      map[d] = { name: String(d), hours: 0 }
+    }
+
+    logs.forEach((log) => {
+      if (!log.logged_date) return
+      const date = new Date(log.logged_date + 'T00:00:00')
+      if (date.getFullYear() === year && date.getMonth() === month) {
+        const day = date.getDate()
+        if (map[day]) {
+          map[day].hours += (log.duration_seconds || 0) / 3600
+        }
+      }
+    })
+
+    return Object.values(map).map((entry) => ({
+      ...entry,
+      hours: Math.round(entry.hours * 100) / 100,
+    }))
+  }, [logs])
+
 
   // ============================================================
   // Derived analytics
@@ -144,7 +179,7 @@ export default function Dashboard() {
     }
   }, [projects, tasks])
 
-  const loading = projectsLoading || tasksLoading
+  const loading = projectsLoading || tasksLoading || logsLoading
 
   // ============================================================
   // Render
@@ -337,6 +372,51 @@ export default function Dashboard() {
               </div>
             </motion.div>
           </div>
+
+          {/* ===== Monthly Hours Worked ===== */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.32 }}
+            className="bg-glass-light dark:bg-glass-dark backdrop-blur-xl border border-white/20 dark:border-white/10 shadow-glass rounded-2xl p-6 mb-8"
+          >
+            <div className="flex items-center gap-2 mb-4">
+              <Timer className="w-5 h-5 text-blue-500" />
+              <h2 className="text-lg font-bold text-slate-900 dark:text-white">
+                Hours Worked per Day — Current Month
+              </h2>
+            </div>
+            <div className="h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={monthlyHours} barGap={4}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.2)" />
+                  <XAxis
+                    dataKey="name"
+                    tick={{ fill: '#94a3b8', fontSize: 11 }}
+                    axisLine={{ stroke: 'rgba(148,163,184,0.3)' }}
+                    tickLine={false}
+                  />
+                  <YAxis
+                    allowDecimals={false}
+                    tick={{ fill: '#94a3b8', fontSize: 12 }}
+                    axisLine={false}
+                    tickLine={false}
+                    width={30}
+                  />
+                  <Tooltip
+                    formatter={(value) => [`${value} hrs`, 'Worked']}
+                    contentStyle={{
+                      backgroundColor: 'rgba(15,23,42,0.9)',
+                      border: '1px solid rgba(59,130,246,0.3)',
+                      borderRadius: '12px',
+                      color: '#fff',
+                    }}
+                  />
+                  <Bar dataKey="hours" name="Hours" fill="#6366f1" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </motion.div>
 
           {/* ===== Today's Agenda ===== */}
           <motion.div

@@ -1,6 +1,6 @@
 # 🚀 Personal ERP & Task Manager
 
-A modern, high-performance **Personal ERP and Advanced Task Manager** designed for engineers managing hardware (PCB), firmware, and web projects. Built with a sleek glassmorphic UI, dark/light mode, and buttery-smooth animations.
+A modern, high-performance **Personal ERP and Advanced Task Manager** built for any professional — software, design, marketing, web, and beyond. It combines project management, an infinite nested task engine, time tracking, and rich analytics in a sleek glassmorphic Blue/Indigo interface with dark/light mode.
 
 ![React](https://img.shields.io/badge/React-18-61DAFB?style=for-the-badge&logo=react&logoColor=white)
 ![Vite](https://img.shields.io/badge/Vite-8-646CFF?style=for-the-badge&logo=vite&logoColor=white)
@@ -13,39 +13,42 @@ A modern, high-performance **Personal ERP and Advanced Task Manager** designed f
 
 ## ✨ Key Features
 
+### ⏱️ Time Tracking & Analytics
+- **Floating stopwatch widget** (00:00:00) with Play / Pause / Stop-Save
+- Saves elapsed time to a `time_logs` table for the current date
+- **"Hours Worked per Day"** Recharts bar chart for the current month on the Dashboard
+
 ### 🗂️ Infinite Nested Task Engine
 - **Unlimited task depth** using the Adjacency List pattern (`parent_id` → `tasks.id`)
 - Recursive `TaskItem` component with smooth Framer Motion expand/collapse animations
 - Cascade completion — check a parent to optionally complete all sub-tasks
-- Inline sub-task creation, due date & time slot scheduling
 - **Inbox / Daily / Weekly / Monthly** views with smart date filtering
+- **"Add to Today"** quick action and **Clear Date** for flexible scheduling
+
+### 🎨 Dynamic Project Management
+- Full CRUD for projects with **cover image uploads** (Supabase Storage)
+- Statuses: **Active**, **On Hold**, and **Completed** with color-coded badges & filters
+- **Animated progress ring** (`completed / total * 100`) on the project details page
+- "Publish to Portfolio" webhook for completed projects
+- Clickable glassmorphic project cards with cover-image banners
 
 ### 📊 Dashboard Analytics
 - Task density bar chart (last 7 days) with Recharts
 - Task status donut chart (completed vs pending)
 - Stat cards: Active Projects, Completed This Week (vs last week), Total Tasks, Due Today
 - **Today's Agenda** — tasks due today, ordered by time slot
-
+- **Monthly Hours Worked** bar chart powered by the time tracker
 ### 🔐 Authentication & Security
 - Email/Password auth via **Supabase Auth**
 - Row Level Security (RLS) on all tables — users can only access their own data
 - Protected routes with loading states
 - Auto-profile creation on signup (database trigger)
 
-### 📁 Project Management
-- Full CRUD for projects (name, description, GitHub repo URL, status)
-- **Dedicated Project Details page** (`/projects/:projectId`) with project-specific tasks
-- Clickable glassmorphic project cards
-- **"Publish to Portfolio"** webhook button for completed projects
-
-### ⚙️ Settings & Preferences
-- Profile management (full name, avatar URL)
+### 👤 Profiles
+- **Profile picture upload** to the `avatars` bucket, reflected in the header globally
+- Full name & avatar management in Settings
 - Dark/Light theme toggle (persisted to localStorage)
 - Global toast notifications (react-hot-toast)
-
-### 📧 Email Notifications (Setup Ready)
-- `cron_notifications_setup.sql` — pg_cron + Edge Function template for daily email summaries
-- Resend API integration guide included
 
 ---
 
@@ -54,12 +57,12 @@ A modern, high-performance **Personal ERP and Advanced Task Manager** designed f
 | Layer | Technology |
 |-------|-----------|
 | **Frontend** | React 18, Vite 8 |
-| **Styling** | Tailwind CSS 3 (glassmorphic, neon accents) |
+| **Styling** | Tailwind CSS 3 (glassmorphic, Blue/Indigo accents) |
 | **Animations** | Framer Motion |
 | **Icons** | Lucide React |
 | **Routing** | React Router DOM v6 |
 | **Charts** | Recharts |
-| **Backend** | Supabase (PostgreSQL, Auth, RLS, Edge Functions, pg_cron) |
+| **Backend** | Supabase (PostgreSQL, Auth, Storage, RLS, Edge Functions, pg_cron) |
 | **Deployment** | Netlify (Frontend) & Supabase (Backend) |
 
 ---
@@ -72,9 +75,9 @@ A modern, high-performance **Personal ERP and Advanced Task Manager** designed f
   /components
     /auth          # ProtectedRoute
     /tasks         # TaskItem (recursive)
-    /ui            # Sidebar, Header, Modal
+    /ui            # Sidebar, Header, Modal, Stopwatch
   /contexts        # AuthContext, ThemeContext
-  /hooks           # useProjects, useTasks
+  /hooks           # useProjects, useTasks, useTimeLogs
   /layouts         # MainLayout
   /lib             # supabaseClient, utils (buildTaskTree, etc.)
   /pages           # Dashboard, Projects, ProjectDetails, TaskView, Settings, Login, Register
@@ -82,11 +85,7 @@ A modern, high-performance **Personal ERP and Advanced Task Manager** designed f
 
 ---
 
-## 🚀 Local Setup / Installation
-
-### Prerequisites
-- Node.js 18+ and npm
-- A [Supabase](https://supabase.com) account (free tier is fine)
+## 🚀 Getting Started
 
 ### Step 1: Clone & Install
 
@@ -99,15 +98,27 @@ npm install
 ### Step 2: Create Your Supabase Project
 
 1. Go to [https://supabase.com](https://supabase.com) and create a new project
-2. Once created, open **SQL Editor** in the Supabase Dashboard
-3. Copy the **entire contents** of `supabase_schema.sql` and paste it into the SQL Editor
-4. Click **Run** — this creates:
+2. Open the **SQL Editor** in the Supabase Dashboard
+3. Copy the **entire contents** of `supabase_schema.sql` and paste it into the SQL Editor, then click **Run**. This creates:
    - `profiles` table (with auto-profile trigger on signup)
    - `projects` table
    - `tasks` table (infinite nesting via `parent_id` with `ON DELETE CASCADE`)
-   - Row Level Security policies on all tables
+   - `time_logs` table
+   - Row Level Security (RLS) policies on all tables
 
-### Step 3: Configure Environment Variables
+### Step 3: Set Up Storage Buckets & Phase 6 Updates
+
+Run the contents of **`phase6_sql_updates.sql`** in the Supabase SQL Editor. This:
+
+- Creates the **`avatars`** and **`project_covers`** public storage buckets
+- Adds upload policies for authenticated users and public read access
+- Adds `cover_image_url` to the `projects` table
+- Updates the project status constraint to `active` / `on_hold` / `completed`
+- Creates the **`time_logs`** table with full RLS policies
+
+> **Note:** You can also create the buckets manually in Dashboard → Storage → New Bucket (set **Public**), then apply the storage policies from `phase6_sql_updates.sql`.
+
+### Step 4: Configure Environment Variables
 
 Copy `.env.example` to `.env`:
 
@@ -142,23 +153,23 @@ VITE_PORTFOLIO_WEBHOOK_URL=https://your-portfolio-webhook-url.com/hook
 3. Copy the **Project URL** → `VITE_SUPABASE_URL`
 4. Copy the **anon public** key → `VITE_SUPABASE_ANON_KEY`
 
-### Step 4: Enable Email Auth
+### Step 5: Enable Email Auth
 
 1. In Supabase Dashboard → **Authentication → Providers**
 2. Ensure **Email** provider is enabled
 3. Optionally disable "Confirm email" for faster local testing
 
-### Step 5: Run the App
+### Step 6: Run the App
 
 ```bash
 npm run dev
 ```
 
-Open **http://localhost:5173** — register a new account and start managing your projects and tasks!
+Open **http://localhost:5173**, register a new account, and start managing your projects, tasks, and time!
 
 ---
 
-## 📧 Setting Up Email Notifications (Optional)
+## 📧 Email Notifications (Optional)
 
 1. Enable **pg_cron** in Supabase Dashboard → Database → Extensions
 2. Create an Edge Function:
@@ -203,3 +214,4 @@ This project is for personal use. Feel free to fork and customize for your own n
 ## 🙏 Acknowledgements
 
 Built with ❤️ using React, Vite, Tailwind CSS, Supabase, Framer Motion, and Recharts.
+

@@ -4,6 +4,7 @@ import { Plus, ListTodo, Loader2, Inbox } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { useTasks } from '../hooks/useTasks'
 import TaskItem from '../components/tasks/TaskItem'
+import TaskEditorModal from '../components/tasks/TaskEditorModal'
 import { buildTaskTree, filterTreeByDateRange, getDateRange, collectDescendantIds, cn } from '../lib/utils'
 
 const TABS = [
@@ -34,6 +35,8 @@ export default function TaskView() {
   const [addingRootTask, setAddingRootTask] = useState(false)
   const [newRootTaskTitle, setNewRootTaskTitle] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  // Full editor modal (priority / tags / rich-text / board status)
+  const [editingTask, setEditingTask] = useState(null)
 
   // Build the full task tree
   const fullTree = useMemo(() => buildTaskTree(tasks), [tasks])
@@ -89,6 +92,13 @@ export default function TaskView() {
       toast.success('Sub-task added!')
     }
   }
+
+  /**
+    * Open the editor modal for an existing task
+    * (priority / tags / board status / rich-text description)
+    */
+  const handleEditTask = (task) => setEditingTask(task)
+  const closeEditor = () => setEditingTask(null)
 
   /**
    * Handle cascade toggle (parent + all descendants)
@@ -280,12 +290,21 @@ export default function TaskView() {
                 onToggleCascade={handleToggleCascade}
                 onAddSubTask={handleAddSubTask}
                 onUpdateTask={updateTask}
+                onEditTask={handleEditTask}
                 onDeleteTask={handleDelete}
               />
             ))}
           </AnimatePresence>
         </div>
       )}
+      {/* Task editor modal (edit priority / tags / board / rich text) */}
+      <TaskEditorModal
+        isOpen={!!editingTask}
+        onClose={closeEditor}
+        mode="edit"
+        task={editingTask}
+        onUpdate={updateTask}
+      />
     </div>
   )
 }

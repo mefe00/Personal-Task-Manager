@@ -49,9 +49,19 @@ export function useTasks() {
 
   /**
    * Create a new task (root or sub-task).
-   * @param {Object} params - { title, parent_id, project_id, due_date, time_slot }
+   * @param {Object} params - { title, parent_id, project_id, due_date, time_slot, kanban_status, priority, tags, description }
    */
-  const createTask = async ({ title, parent_id = null, project_id = null, due_date = null, time_slot = null }) => {
+  const createTask = async ({
+    title,
+    parent_id = null,
+    project_id = null,
+    due_date = null,
+    time_slot = null,
+    kanban_status = 'todo',
+    priority = 'medium',
+    tags = [],
+    description = null,
+  }) => {
     if (!user) return { error: 'Not authenticated' }
     if (!title?.trim()) return { error: 'Title is required' }
 
@@ -66,6 +76,10 @@ export function useTasks() {
             title: title.trim(),
             due_date,
             time_slot,
+            kanban_status,
+            priority,
+            tags: tags || [],
+            description,
             status: false,
           },
         ])

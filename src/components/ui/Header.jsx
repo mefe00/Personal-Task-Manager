@@ -16,6 +16,7 @@ export default function Header({ onMenuClick }) {
   // Get display name from user metadata
   const fullName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'User'
   const avatarLetter = fullName.charAt(0).toUpperCase()
+  const avatarUrl = user?.user_metadata?.avatar_url
 
   const handleLogout = async () => {
     await signOut()
@@ -74,9 +75,13 @@ export default function Header({ onMenuClick }) {
             {/* Avatar */}
             <motion.div
               whileHover={{ scale: 1.05 }}
-              className="flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-br from-neon-purple to-neon-pink text-white font-bold shadow-neon"
+              className="flex items-center justify-center w-10 h-10 rounded-full overflow-hidden bg-gradient-to-br from-neon-purple to-neon-pink text-white font-bold shadow-neon"
             >
-              {avatarLetter}
+              {avatarUrl ? (
+                <img src={avatarUrl} alt={fullName} className="w-full h-full object-cover" />
+              ) : (
+                avatarLetter
+              )}
             </motion.div>
           </div>
 

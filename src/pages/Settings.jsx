@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Save, User, Globe, Sun, Moon, Loader2 } from 'lucide-react'
+import { Save, User, Globe, Sun, Moon, Loader2, ImagePlus, X } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../contexts/AuthContext'
@@ -20,6 +20,7 @@ export default function Settings() {
   const [email] = useState(user?.email || '')
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [uploadingAvatar, setUploadingAvatar] = useState(false)
 
   // Fetch profile from the profiles table on mount
   useEffect(() => {
@@ -57,6 +58,48 @@ export default function Settings() {
   }, [user])
 
   /**
+   * Upload a profile picture to the `avatars` bucket and store the
+   * public URL in avatarUrl (saved to the profiles table on submit).
+   */
+  const handleAvatarUpload = async (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please select an image file')
+      return
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Image must be smaller than 5MB')
+      return
+    }
+
+    setUploadingAvatar(true)
+    try {
+      const ext = file.name.split('.').pop() || 'png'
+      const fileName = `${user.id}-${Date.now()}.${ext}`
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(fileName, file, { upsert: true })
+
+      if (uploadError) throw uploadError
+
+      const { data: urlData } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(fileName)
+
+      setAvatarUrl(urlData.publicUrl)
+      toast.success('Avatar uploaded!')
+    } catch (err) {
+      console.error('Error uploading avatar:', err)
+      toast.error('Failed to upload avatar')
+    } finally {
+      setUploadingAvatar(false)
+      e.target.value = ''
+    }
+  }
+
+  /**
    * Save updated profile info (full_name + avatar_url)
    */
   const handleSaveProfile = async (e) => {
@@ -77,9 +120,9 @@ export default function Settings() {
         return
       }
 
-      // Also update auth metadata so full_name is consistent
+      // Also update auth metadata so full_name & avatar are consistent globally
       await supabase.auth.updateUser({
-        data: { full_name: fullName.trim() },
+        data: { full_name: fullName.trim(), avatar_url: avatarUrl.trim() },
       })
 
       toast.success('Profile updated successfully!')
@@ -161,17 +204,60 @@ export default function Settings() {
                 />
               </div>
 
-              {/* Avatar URL */}
+              {/* Avatar / Profile picture */}
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                  Avatar URL
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                  Profile Picture
                 </label>
+
+                <div className="flex items-center gap-4">
+                  {/* Preview */}
+                  <div className="flex items-center justify-center w-16 h-16 rounded-full overflow-hidden bg-gradient-to-br from-neon-purple to-neon-pink text-white font-bold text-xl shrink-0">
+                    {avatarUrl ? (
+                      <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+                    ) : (
+                      (fullName.charAt(0) || 'U').toUpperCase()
+                    )}
+                  </div>
+
+                  <div className="flex-1 space-y-2">
+                    {/* Upload button */}
+                    <label className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-white/50 dark:bg-white/10 border border-white/30 dark:border-white/20 text-sm font-medium text-slate-700 dark:text-slate-300 cursor-pointer hover:bg-white/60 dark:hover:bg-white/10 transition-colors">
+                      {uploadingAvatar ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          Uploading...
+                        </>
+                      ) : (
+                        <>
+                          <ImagePlus className="w-4 h-4" />
+                          Upload photo
+                        </>
+                      )}
+                      <input type="file" accept="image/*" onChange={handleAvatarUpload} className="hidden" />
+                    </label>
+
+                    {/* Remove (reset to initials) */}
+                    {avatarUrl && (
+                      <button
+                        type="button"
+                        onClick={() => setAvatarUrl('')}
+                        className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400 hover:text-red-500 transition-colors"
+                      >
+                        <X className="w-3 h-3" />
+                        Remove photo
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Manual URL (optional advanced) */}
                 <input
                   type="url"
                   value={avatarUrl}
                   onChange={(e) => setAvatarUrl(e.target.value)}
-                  placeholder="https://example.com/avatar.png"
-                  className="w-full px-4 py-3 rounded-xl bg-white/50 dark:bg-white/10 border border-white/30 dark:border-white/20 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-neon-purple/50 transition-all"
+                  placeholder="…or paste an image URL"
+                  className="w-full mt-3 px-4 py-3 rounded-xl bg-white/50 dark:bg-white/10 border border-white/30 dark:border-white/20 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-neon-purple/50 transition-all"
                 />
               </div>
 

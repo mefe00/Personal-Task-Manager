@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ChevronRight, Calendar, Plus, Trash2, Clock } from 'lucide-react'
+import { ChevronRight, Calendar, Plus, Trash2, Clock, Sun, CalendarX2, Pencil, Flag } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { cn } from '../../lib/utils'
 
@@ -23,6 +23,7 @@ export default function TaskItem({
   onAddSubTask,
   onUpdateTask,
   onDeleteTask,
+  onEditTask,
 }) {
   const [expanded, setExpanded] = useState(true)
   const [addingSubTask, setAddingSubTask] = useState(false)
@@ -33,6 +34,17 @@ export default function TaskItem({
   const [updating, setUpdating] = useState(false)
 
   const hasChildren = task.children && task.children.length > 0
+
+  // Local YYYY-MM-DD string helpers (avoid UTC date mismatches)
+  const toLocalDateString = (d) => {
+    const y = d.getFullYear()
+    const m = String(d.getMonth() + 1).padStart(2, '0')
+    const day = String(d.getDate()).padStart(2, '0')
+    return `${y}-${m}-${day}`
+  }
+  const todayStr = toLocalDateString(new Date())
+  // Task is "on today" when it has a due_date equal to today
+  const isDueToday = Boolean(task.due_date) && task.due_date === todayStr
 
   /**
    * Handle checkbox toggle - optionally cascade to children
@@ -100,6 +112,42 @@ export default function TaskItem({
       toast.error('Failed to save schedule')
     } else {
       toast.success('Schedule saved!')
+    }
+    setShowDatePicker(false)
+    setUpdating(false)
+  }
+
+  /**
+   * "Add to Today" - assign this task to today's date so it shows up
+   * in the global Daily view. Works for ANY task via onUpdateTask.
+   */
+  const handleAddToToday = async (e) => {
+    e.stopPropagation()
+    setUpdating(true)
+    const result = await onUpdateTask(task.id, { due_date: todayStr })
+    setUpdating(false)
+    if (result?.error) {
+      toast.error('Failed to add to today')
+    } else {
+      toast.success('Added to today! 🌞')
+      setDueDate(todayStr)
+      setShowDatePicker(false)
+    }
+  }
+
+  /**
+   * Clear Date - remove the task's due date/time so it disappears from
+   * Daily/Weekly/Monthly views and returns to the project/inbox.
+   */
+  const handleClearDate = async () => {
+    setUpdating(true)
+    const result = await onUpdateTask(task.id, { due_date: null, time_slot: null })
+    if (result?.error) {
+      toast.error('Failed to clear date')
+    } else {
+      toast.success('Date cleared')
+      setDueDate('')
+      setTimeSlot('')
     }
     setShowDatePicker(false)
     setUpdating(false)
@@ -194,6 +242,36 @@ export default function TaskItem({
             {task.title}
           </span>
 
+          {/* Priority flag (only high/low) */}
+          {task.priority === 'high' && (
+            <Flag
+              className="w-4 h-4 text-red-500 shrink-0"
+              aria-label="High priority"
+              title="High priority"
+            />
+          )}
+          {task.priority === 'low' && (
+            <Flag
+              className="w-4 h-4 text-neon-green shrink-0"
+              aria-label="Low priority"
+              title="Low priority"
+            />
+          )}
+
+          {/* Tags badges */}
+          {(task.tags || []).length > 0 && (
+            <div className="flex items-center gap-1 flex-wrap shrink-0">
+              {task.tags.map((tag, i) => (
+                <span
+                  key={i}
+                  className="px-2 py-0.5 rounded-md bg-neon-purple/10 text-neon-purple dark:text-neon-cyan text-xs font-medium"
+                >
+                  {tag}
+                </span>
+              ))}
+            </div>
+          )}
+
           {/* Due date / time badge */}
           {(task.due_date || task.time_slot) && (
             <span className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-neon-cyan/10 text-neon-cyan text-xs font-medium shrink-0">
@@ -215,6 +293,47 @@ export default function TaskItem({
             >
               <Calendar className="w-4 h-4" />
             </motion.button>
+
+            {/* Today quick action — Add to Today, or Clear if already due today */}
+            {isDueToday ? (
+              <motion.button
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+                onClick={handleClearDate}
+                disabled={updating}
+                className="p-1.5 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-red-500/10 hover:text-red-500 transition-colors disabled:opacity-50"
+                aria-label="Clear date (remove from today)"
+                title="Clear date"
+              >
+                <CalendarX2 className="w-4 h-4" />
+              </motion.button>
+            ) : (
+              <motion.button
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+                onClick={handleAddToToday}
+                disabled={updating}
+                className="p-1.5 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-amber-400/20 hover:text-amber-500 transition-colors disabled:opacity-50"
+                aria-label="Add to today"
+                title="Add to today"
+              >
+                <Sun className="w-4 h-4" />
+              </motion.button>
+            )}
+
+            {/* Edit */}
+            {onEditTask && (
+              <motion.button
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+                onClick={() => onEditTask(task)}
+                className="p-1.5 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-blue-500/10 hover:text-blue-500 transition-colors"
+                aria-label="Edit task"
+                title="Edit task"
+              >
+                <Pencil className="w-4 h-4" />
+              </motion.button>
+            )}
 
             {/* Add sub-task */}
             <motion.button
@@ -267,6 +386,18 @@ export default function TaskItem({
                   onChange={(e) => setTimeSlot(e.target.value)}
                   className="flex-1 px-3 py-1.5 rounded-lg bg-white/50 dark:bg-white/10 border border-white/30 dark:border-white/20 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-neon-purple/50"
                 />
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={handleClearDate}
+                  disabled={updating}
+                  className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-white/50 dark:bg-white/10 border border-white/30 dark:border-white/20 text-slate-600 dark:text-slate-300 text-sm font-medium disabled:opacity-50"
+                  aria-label="Clear date"
+                  title="Clear date"
+                >
+                  <CalendarX2 className="w-4 h-4" />
+                  Clear
+                </motion.button>
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
@@ -337,6 +468,7 @@ export default function TaskItem({
                     onAddSubTask={onAddSubTask}
                     onUpdateTask={onUpdateTask}
                     onDeleteTask={onDeleteTask}
+                    onEditTask={onEditTask}
                   />
                 ))}
               </div>

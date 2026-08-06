@@ -13,7 +13,37 @@
     min-height: 100vh;
   }
 
-  #root {
+    #root {
     min-height: 100vh;
+  }
+
+  /* Tiptap (RichTextEditor) content styling */
+  .rich-text-editor {
+    outline: 0;
+    min-height: 6rem;
+  }
+  .rich-text-editor p {
+    margin: 0 0 0.5em;
+  }
+  .rich-text-editor ul {
+    margin: 0 0 0.5em 1.25em;
+    padding: 0;
+  }
+  .rich-text-editor li {
+    margin: 0 0 0.15em;
+  }
+  .rich-text-editor pre {
+    background: rgba(0, 0, 0, 0.4);
+    border-radius: 0.5rem;
+    padding: 0.6rem;
+    overflow-x: auto;
+    margin: 0.5em 0;
+    font-size: 0.8rem;
+  }
+  .rich-text-editor code {
+    background: rgba(148, 163, 184, 0.25);
+    border-radius: 0.25rem;
+    padding: 0.1rem 0.3rem;
+    font-size: 0.85rem;
   }
 }

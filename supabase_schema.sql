@@ -67,8 +67,9 @@ create table if not exists public.projects (
   name            text not null,
   description     text,
   status          text not null default 'active'
-                  check (status in ('active', 'completed', 'archived')),
+                  check (status in ('active', 'on_hold', 'completed')),
   github_repo_url text,
+  cover_image_url text,
   created_at      timestamptz default now()
 );
 
