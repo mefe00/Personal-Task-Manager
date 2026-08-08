@@ -20,7 +20,7 @@ createRoot(document.getElementById('root')).render(
                 background: 'rgba(15, 23, 42, 0.9)',
                 color: '#fff',
                 backdropFilter: 'blur(12px)',
-                border: '1px solid rgba(168, 85, 247, 0.3)',
+                border: '1px solid rgba(59, 130, 246, 0.4)',
                 borderRadius: '12px',
               },
               success: {

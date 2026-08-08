@@ -7,6 +7,7 @@ import Dashboard from './pages/Dashboard'
 import Projects from './pages/Projects'
 import ProjectDetails from './pages/ProjectDetails'
 import TaskView from './pages/TaskView'
+import MediaTracker from './pages/MediaTracker'
 import Settings from './pages/Settings'
 
 /**
@@ -21,6 +22,7 @@ import Settings from './pages/Settings'
  *  - /projects            -> Projects CRUD
  *  - /projects/:projectId -> Project Details (project-specific tasks)
  *  - /tasks               -> TaskView (infinite nested tasks)
+ *  - /media               -> MediaTracker (books, movies, other)
  *  - /settings            -> Settings
  */
 function App() {
@@ -42,6 +44,7 @@ function App() {
         <Route path="/projects" element={<Projects />} />
         <Route path="/projects/:projectId" element={<ProjectDetails />} />
         <Route path="/tasks" element={<TaskView />} />
+        <Route path="/media" element={<MediaTracker />} />
         <Route path="/settings" element={<Settings />} />
       </Route>
 

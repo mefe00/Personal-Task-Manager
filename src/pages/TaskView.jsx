@@ -44,10 +44,18 @@ export default function TaskView() {
   // Filter tree based on active tab
   const filteredTree = useMemo(() => {
     if (activeTab === 'inbox') {
-      // Inbox shows ALL root tasks, including those with null due_date
-      // But we also need to include tasks that have children even if
-      // the parent has no due_date (so nested tasks remain accessible)
-      return fullTree
+      // Inbox shows only standalone root tasks, newest first.
+      // - Hide completed tasks (status === true)
+      // - Hide project tasks (project_id !== null); those live in their project
+      //   or in the Daily view when they have a date.
+      const prune = (tree) =>
+        tree
+          .filter((t) => !t.status && t.project_id === null)
+          .map((t) => ({ ...t, children: prune(t.children) }))
+
+      return prune(fullTree).sort(
+        (a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0)
+      )
     }
     const { start, end } = getDateRange(activeTab)
     return filterTreeByDateRange(fullTree, start, end)

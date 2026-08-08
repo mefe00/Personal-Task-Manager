@@ -90,9 +90,15 @@ export default function TaskEditorModal({
     onClose()
   }
 
+  // Tags and Kanban board status are only relevant for tasks that belong
+  // to a project. They are hidden for standalone (non-project) tasks.
+  const isProjectTask = mode === 'edit' ? Boolean(task?.project_id) : Boolean(projectId)
+
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={mode === 'edit' ? 'Edit Task' : 'New Task'}>
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="flex flex-col max-h-[78vh]">
+        {/* Scrollable content */}
+        <div className="flex-1 overflow-y-auto space-y-4 pr-1">
         {error && (
           <div className="px-4 py-3 rounded-xl bg-red-500/10 text-red-500 text-sm">{error}</div>
         )}
@@ -135,19 +141,21 @@ export default function TaskEditorModal({
           </div>
         </div>
 
-        {/* Tags */}
-        <div>
-          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-            Tags
-          </label>
-          <input
-            type="text"
-            value={tags}
-            onChange={(e) => setTags(e.target.value)}
-            placeholder="Design, Bug, Urgent (comma separated)"
-            className="w-full px-4 py-3 rounded-xl bg-white/50 dark:bg-white/10 border border-white/30 dark:border-white/20 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-neon-purple/50 transition-all"
-          />
-        </div>
+        {/* Tags - project tasks only */}
+        {isProjectTask && (
+          <div>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+              Tags
+            </label>
+            <input
+              type="text"
+              value={tags}
+              onChange={(e) => setTags(e.target.value)}
+              placeholder="Design, Bug, Urgent (comma separated)"
+              className="w-full px-4 py-3 rounded-xl bg-white/50 dark:bg-white/10 border border-white/30 dark:border-white/20 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-neon-purple/50 transition-all"
+            />
+          </div>
+        )}
 
         {/* Due date & time */}
         <div className="grid grid-cols-2 gap-3">
@@ -175,8 +183,8 @@ export default function TaskEditorModal({
           </div>
         </div>
 
-        {/* Kanban status (edit only) */}
-        {mode === 'edit' && (
+        {/* Kanban status (project tasks, edit only) */}
+        {isProjectTask && mode === 'edit' && (
           <div>
             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
               Board Status
@@ -200,34 +208,37 @@ export default function TaskEditorModal({
           </label>
           <RichTextEditor value={description} onChange={setDescription} />
         </div>
+        </div>
 
-        {/* Actions */}
-        <div className="flex gap-3 pt-2">
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            type="button"
-            onClick={onClose}
-            className="flex-1 py-3 rounded-xl bg-white/50 dark:bg-white/10 border border-white/30 dark:border-white/20 text-slate-700 dark:text-slate-300 font-medium transition-all"
-          >
-            Cancel
-          </motion.button>
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            type="submit"
-            disabled={saving}
-            className="flex-1 py-3 rounded-xl bg-gradient-to-r from-neon-purple to-neon-pink text-white font-semibold shadow-neon transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {saving ? (
-              <span className="inline-flex items-center gap-2">
-                <Loader2 className="w-4 h-4 animate-spin" />
-                Saving...
-              </span>
-            ) : (
-              mode === 'edit' ? 'Save Changes' : 'Create Task'
-            )}
-          </motion.button>
+        {/* Sticky footer - always visible while content scrolls */}
+        <div className="shrink-0 sticky bottom-0 -mx-6 -mb-6 px-6 py-4 mt-4 border-t border-white/20 dark:border-white/10 bg-glass-light dark:bg-glass-dark backdrop-blur-xl">
+          <div className="flex gap-3">
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              type="button"
+              onClick={onClose}
+              className="flex-1 py-3 rounded-xl bg-white/50 dark:bg-white/10 border border-white/30 dark:border-white/20 text-slate-700 dark:text-slate-300 font-medium transition-all"
+            >
+              Cancel
+            </motion.button>
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              type="submit"
+              disabled={saving}
+              className="flex-1 py-3 rounded-xl bg-gradient-to-r from-neon-purple to-neon-pink text-white font-semibold shadow-neon transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {saving ? (
+                <span className="inline-flex items-center gap-2">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Saving...
+                </span>
+              ) : (
+                mode === 'edit' ? 'Save Changes' : 'Create Task'
+              )}
+            </motion.button>
+          </div>
         </div>
       </form>
     </Modal>

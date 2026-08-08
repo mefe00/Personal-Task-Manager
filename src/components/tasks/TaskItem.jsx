@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ChevronRight, Calendar, Plus, Trash2, Clock, Sun, CalendarX2, Pencil, Flag } from 'lucide-react'
+import { ChevronRight, Calendar, Plus, Trash2, Clock, Sun, CalendarX2, Pencil, Flag, Eye } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { cn } from '../../lib/utils'
 
@@ -29,6 +29,7 @@ export default function TaskItem({
   const [addingSubTask, setAddingSubTask] = useState(false)
   const [newSubTaskTitle, setNewSubTaskTitle] = useState('')
   const [showDatePicker, setShowDatePicker] = useState(false)
+  const [showDescription, setShowDescription] = useState(false)
   const [dueDate, setDueDate] = useState(task.due_date || '')
   const [timeSlot, setTimeSlot] = useState(task.time_slot || '')
   const [updating, setUpdating] = useState(false)
@@ -74,7 +75,7 @@ export default function TaskItem({
     if (result?.error) {
       toast.error('Failed to update task')
     } else {
-      toast.success(newStatus ? 'Task completed! 🎉' : 'Task reopened')
+      toast.success(newStatus ? 'Task completed' : 'Task reopened')
     }
   }
 
@@ -129,7 +130,7 @@ export default function TaskItem({
     if (result?.error) {
       toast.error('Failed to add to today')
     } else {
-      toast.success('Added to today! 🌞')
+      toast.success('Added to today')
       setDueDate(todayStr)
       setShowDatePicker(false)
     }
@@ -241,6 +242,25 @@ export default function TaskItem({
           >
             {task.title}
           </span>
+
+          {/* Quick description viewer (read-only) */}
+          {task.description && (
+            <motion.button
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+              onClick={() => setShowDescription((v) => !v)}
+              className={cn(
+                'p-1.5 rounded-lg transition-colors shrink-0',
+                showDescription
+                  ? 'text-blue-500 bg-blue-500/10'
+                  : 'text-slate-500 dark:text-slate-400 hover:bg-blue-500/10 hover:text-blue-500'
+              )}
+              aria-label={showDescription ? 'Hide description' : 'Show description'}
+              title={showDescription ? 'Hide description' : 'Show description'}
+            >
+              <Eye className="w-4 h-4" />
+            </motion.button>
+          )}
 
           {/* Priority flag (only high/low) */}
           {task.priority === 'high' && (
@@ -362,6 +382,24 @@ export default function TaskItem({
             </motion.button>
           </div>
         </div>
+
+        {/* Read-only expandable description */}
+        <AnimatePresence>
+          {showDescription && task.description && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.2 }}
+              className="overflow-hidden"
+            >
+              <div
+                className="mt-2 ml-8 p-3 rounded-xl bg-white/40 dark:bg-white/5 border border-white/20 dark:border-white/10 text-sm text-slate-800 dark:text-slate-200 rich-text-editor"
+                dangerouslySetInnerHTML={{ __html: task.description }}
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Inline date/time picker */}
         <AnimatePresence>

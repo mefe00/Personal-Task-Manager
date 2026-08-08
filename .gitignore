@@ -23,8 +23,7 @@ dist-ssr
 10_PHASE_*.md
 AI_REPORT_PHASE_*.md
 supabase_schema.sql
-phase6_sql_updates.sql
-phase7_sql_updates.sql
+phase*_sql_updates.sql
 cron_notifications_setup.sql
 
 # Editor directories and files

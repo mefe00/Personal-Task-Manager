@@ -8,11 +8,12 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Professional Blue/Indigo accent palette
+        // Professional Blue/Slate accent palette
+        // (Phase 8: all purple/magenta/neon accents replaced with calm blue tones)
         neon: {
-          cyan: '#38bdf8',   // Sky-400 (secondary blue accent)
-          purple: '#6366f1', // Indigo-500 (primary accent)
-          pink: '#3b82f6',   // Blue-500 (gradient partner)
+          cyan: '#0ea5e9',   // Sky-500 (secondary blue accent)
+          purple: '#3b82f6', // Blue-500 (primary accent)
+          pink: '#2563eb',   // Blue-600 (gradient partner)
           green: '#10b981',  // Emerald-500 (success)
         },
         // Glassmorphic surface colors

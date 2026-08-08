@@ -165,7 +165,7 @@ export default function Projects() {
     const webhookUrl = import.meta.env.VITE_PORTFOLIO_WEBHOOK_URL
 
     if (!webhookUrl) {
-      setPublishMessage('⚠️ No webhook URL configured. Set VITE_PORTFOLIO_WEBHOOK_URL in your .env file.')
+      setPublishMessage('No webhook URL configured. Set VITE_PORTFOLIO_WEBHOOK_URL in your .env file.')
       toast.error('No webhook URL configured. Check your .env file.')
       setPublishingId(null)
       return
@@ -195,11 +195,11 @@ export default function Projects() {
         throw new Error(`Webhook responded with status ${response.status}`)
       }
 
-      setPublishMessage('✅ Project published to portfolio!')
+      setPublishMessage('Project published to portfolio!')
       toast.success('Project published to portfolio!')
     } catch (err) {
       console.error('Error publishing to portfolio:', err)
-      setPublishMessage(`❌ Failed to publish: ${err.message}`)
+      setPublishMessage(`Failed to publish: ${err.message}`)
       toast.error(`Failed to publish: ${err.message}`)
     } finally {
       setPublishingId(null)

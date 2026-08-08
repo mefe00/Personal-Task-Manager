@@ -17,9 +17,12 @@ import { FolderKanban, CheckCircle2, ListTodo, CalendarClock, Timer } from 'luci
 import { useProjects } from '../hooks/useProjects'
 import { useTasks } from '../hooks/useTasks'
 import { useTimeLogs } from '../hooks/useTimeLogs'
+import Stopwatch from '../components/ui/Stopwatch'
+import WeatherCard from '../components/dashboard/WeatherCard'
+import NewsCard from '../components/dashboard/NewsCard'
 import { cn } from '../lib/utils'
 
-const PIE_COLORS = ['#10b981', '#6366f1', '#3b82f6', '#38bdf8', '#f59e0b']
+const PIE_COLORS = ['#10b981', '#2563eb', '#3b82f6', '#0ea5e9', '#f59e0b']
 
 /**
  * Dashboard - Analytics overview with task density charts.
@@ -287,6 +290,17 @@ export default function Dashboard() {
             </motion.div>
           </div>
 
+          {/* ===== Live Widgets (Timer, Weather) ===== */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <Stopwatch />
+            <WeatherCard />
+          </div>
+
+          {/* ===== Live News Feed ===== */}
+          <div className="mb-8">
+            <NewsCard />
+          </div>
+
           {/* ===== Charts Row ===== */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
             {/* Task Density Bar Chart */}
@@ -319,13 +333,13 @@ export default function Dashboard() {
                     <Tooltip
                       contentStyle={{
                         backgroundColor: 'rgba(15,23,42,0.9)',
-                        border: '1px solid rgba(168,85,247,0.3)',
+                        border: '1px solid rgba(59,130,246,0.3)',
                         borderRadius: '12px',
                         color: '#fff',
                       }}
                     />
                     <Legend wrapperStyle={{ fontSize: 12 }} />
-                    <Bar dataKey="created" name="Created" fill="#a855f7" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="created" name="Created" fill="#3b82f6" radius={[4, 4, 0, 0]} />
                     <Bar dataKey="completed" name="Completed" fill="#34d399" radius={[4, 4, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
@@ -361,7 +375,7 @@ export default function Dashboard() {
                     <Tooltip
                       contentStyle={{
                         backgroundColor: 'rgba(15,23,42,0.9)',
-                        border: '1px solid rgba(168,85,247,0.3)',
+                        border: '1px solid rgba(59,130,246,0.3)',
                         borderRadius: '12px',
                         color: '#fff',
                       }}
@@ -412,7 +426,7 @@ export default function Dashboard() {
                       color: '#fff',
                     }}
                   />
-                  <Bar dataKey="hours" name="Hours" fill="#6366f1" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="hours" name="Hours" fill="#2563eb" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -431,7 +445,7 @@ export default function Dashboard() {
 
             {analytics.todaysAgenda.length === 0 ? (
               <p className="text-slate-500 dark:text-slate-400 text-sm py-8 text-center">
-                No tasks due today. Enjoy the calm! 🎉
+                No tasks due today. Enjoy the calm.
               </p>
             ) : (
               <div className="space-y-2">
