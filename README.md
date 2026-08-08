@@ -33,8 +33,9 @@ Planning is built for professionals who need a single, focused workspace to mana
 
 ### Dashboard Feeds
 - Current weather for the user's location using the free Open-Meteo API via the browser Geolocation API.
-- A live Tech & World News carousel fetched from a free, no-key public endpoint.
-- Loading, permission-denied, and error states are handled gracefully for both feeds.
+- A live Tech & World News vertical feed aggregated from top-tier sources (BBC, Reuters, Ars Technica, Daily Sabah, and more) via no-key public endpoints.
+- Each news item carries a dynamically assigned category badge (Quantum, AI, Space, Turkey, Geopolitics, Science, Technology, Business, Economy, or General) derived from the headline and content.
+- The feed renders in a clean vertical scrolling container with a minimalist custom scrollbar; loading, permission-denied, and error states are handled gracefully.
 
 ### Media Tracker
 - A dedicated page to track Books to read, Movies to watch, and other media.
