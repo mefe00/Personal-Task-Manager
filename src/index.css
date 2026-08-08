@@ -46,4 +46,23 @@
     padding: 0.1rem 0.3rem;
     font-size: 0.85rem;
   }
+
+  /* Minimalist custom scrollbar for the vertical news feed */
+  .news-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(59, 130, 246, 0.4) transparent;
+  }
+  .news-scroll::-webkit-scrollbar {
+    width: 6px;
+  }
+  .news-scroll::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .news-scroll::-webkit-scrollbar-thumb {
+    background: rgba(59, 130, 246, 0.35);
+    border-radius: 9999px;
+  }
+  .news-scroll::-webkit-scrollbar-thumb:hover {
+    background: rgba(59, 130, 246, 0.6);
+  }
 }
