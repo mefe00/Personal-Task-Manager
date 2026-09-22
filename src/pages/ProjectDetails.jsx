@@ -599,7 +599,7 @@ export default function ProjectDetails() {
                   <div className="flex items-center gap-2">
                     <span className="text-xs text-slate-400 dark:text-slate-500">
                       {note.created_at
-                        ? new Date(note.created_at).toLocaleDateString()
+                        ? new Date(note.created_at).toLocaleDateString('en-US')
                         : ''}
                     </span>
                     <button

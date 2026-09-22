@@ -309,7 +309,7 @@ export default function TaskItem({
           {(task.due_date || task.time_slot) && (
             <span className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-neon-cyan/10 text-neon-cyan text-xs font-medium shrink-0">
               <Clock className="w-3 h-3" />
-              {task.due_date && new Date(task.due_date + 'T00:00:00').toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+              {task.due_date && new Date(task.due_date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
               {task.time_slot && ` ${task.time_slot.slice(0, 5)}`}
             </span>
           )}

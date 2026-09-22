@@ -446,7 +446,7 @@ export default function Projects() {
 
                 {/* Created date */}
                 <p className="mt-4 text-xs text-slate-500 dark:text-slate-500">
-                  Created {new Date(project.created_at).toLocaleDateString()}
+                  Created {new Date(project.created_at).toLocaleDateString('en-US')}
                 </p>
                 </div>
               </motion.div>

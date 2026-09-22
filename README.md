@@ -50,7 +50,7 @@ Planning is built for professionals who need a single, focused workspace to mana
 
 ### Dashboard Feeds
 - Current weather for the user's location using the free Open-Meteo API via the browser Geolocation API.
-- A live Tech & World News vertical feed aggregated from top-tier sources (BBC, Reuters, Ars Technica, Daily Sabah, and more) via no-key public endpoints.
+- A live Tech & World News vertical feed aggregated from keyless, CORS-friendly public endpoints (Hacker News via Algolia and dev.to).
 - Each news item carries a dynamically assigned category badge (Quantum, AI, Space, Turkey, Geopolitics, Science, Technology, Business, Economy, or General) derived from the headline and content.
 - The feed renders in a clean vertical scrolling container with a minimalist custom scrollbar; loading, permission-denied, and error states are handled gracefully.
 

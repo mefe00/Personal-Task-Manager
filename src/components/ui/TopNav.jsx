@@ -119,7 +119,7 @@ export default function TopNav() {
   return (
     <>
       {/* ===== Floating pill navbar ===== */}
-      <nav className="fixed top-4 left-1/2 -translate-x-1/2 z-40 w-[calc(100%-2rem)] max-w-3xl">
+      <nav className="fixed top-4 left-1/2 -translate-x-1/2 z-40 w-[calc(100%-2rem)] max-w-4xl">
         <motion.div
           initial={{ y: -20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
@@ -145,26 +145,26 @@ export default function TopNav() {
                 end={item.end}
                 className={({ isActive }) =>
                   cn(
-                    'flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-all whitespace-nowrap',
-                    'text-slate-600 dark:text-slate-300 hover:bg-white/60 dark:hover:bg-white/10 hover:text-slate-900 dark:hover:text-white',
-                    isActive && 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-neon'
+                    'flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-colors whitespace-nowrap',
+                    'text-slate-600 dark:text-slate-300 hover:bg-black/5 dark:hover:bg-white/10 hover:text-slate-900 dark:hover:text-white',
+                    isActive && 'bg-blue-600 text-white shadow-sm'
                   )
                 }
               >
                 <item.icon className="w-4 h-4 shrink-0" />
-                <span className="hidden lg:inline">{item.label}</span>
+                <span className="hidden xl:inline">{item.label}</span>
               </NavLink>
             ))}
           </div>
 
           {/* Right controls — theme toggle, avatar & (mobile) menu */}
-          <div className="flex items-center gap-4 ml-auto shrink-0">
+          <div className="flex items-center gap-2 ml-auto shrink-0">
             {/* Theme toggle */}
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={toggleTheme}
-              className="p-2 rounded-full shrink-0 text-slate-600 dark:text-slate-300 hover:bg-white/60 dark:hover:bg-white/10 transition-colors"
+              className="p-2 rounded-full shrink-0 text-slate-600 dark:text-slate-300 hover:bg-black/5 dark:hover:bg-white/10 transition-colors"
               aria-label={
                 theme === 'dark'
                   ? 'Dark mode is active — click to switch to Light'
@@ -218,7 +218,7 @@ export default function TopNav() {
                           'w-full flex items-center gap-2 px-3 py-2 rounded-xl text-sm transition-colors',
                           isActive
                             ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400 font-medium'
-                            : 'text-slate-700 dark:text-slate-200 hover:bg-white/50 dark:hover:bg-white/10'
+                            : 'text-slate-700 dark:text-slate-200 hover:bg-black/5 dark:hover:bg-white/10'
                         )
                       }
                     >
@@ -293,9 +293,8 @@ export default function TopNav() {
                     className={({ isActive }) =>
                       cn(
                         'flex items-center gap-4 px-5 py-4 rounded-2xl text-base font-semibold transition-colors',
-                        'text-slate-700 dark:text-slate-200 hover:bg-white/70 dark:hover:bg-white/10',
-                        isActive &&
-                          'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-neon'
+                        'text-slate-700 dark:text-slate-200 hover:bg-black/5 dark:hover:bg-white/10',
+                        isActive && 'bg-blue-600 text-white shadow-sm'
                       )
                     }
                   >
@@ -314,8 +313,8 @@ export default function TopNav() {
                 className={({ isActive }) =>
                   cn(
                     'flex items-center gap-4 px-5 py-4 rounded-2xl text-base font-semibold transition-colors',
-                    'text-slate-700 dark:text-slate-200 hover:bg-white/70 dark:hover:bg-white/10',
-                    isActive && 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-neon'
+                    'text-slate-700 dark:text-slate-200 hover:bg-black/5 dark:hover:bg-white/10',
+                    isActive && 'bg-blue-600 text-white shadow-sm'
                   )
                 }
               >
@@ -324,12 +323,12 @@ export default function TopNav() {
               </NavLink>
             </div>
 
-            {/* Bottom: theme + user */}
-            <div className="px-6 pb-8 pt-4 flex items-center justify-between gap-3">
+            {/* Bottom: theme + user — two rows so nothing overlaps on narrow screens */}
+            <div className="px-6 pb-8 pt-4 space-y-3">
               <motion.button
-                whileTap={{ scale: 0.96 }}
+                whileTap={{ scale: 0.97 }}
                 onClick={toggleTheme}
-                className="flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-medium text-slate-700 dark:text-slate-200 border border-white/40 dark:border-white/10 bg-white/50 dark:bg-white/5"
+                className="flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-full text-sm font-medium text-slate-700 dark:text-slate-200 border border-black/5 dark:border-white/10 bg-black/5 dark:bg-white/10 hover:bg-black/10 dark:hover:bg-white/15 transition-colors"
                 aria-label={
                   theme === 'dark'
                     ? 'Dark mode is active — tap to switch to Light'
@@ -340,11 +339,11 @@ export default function TopNav() {
                 {theme === 'dark' ? 'Dark mode' : 'Light mode'}
               </motion.button>
 
-              <div className="flex items-center gap-2">
+              <div className="flex items-center justify-between gap-3">
                 <UserChip fullName={fullName} avatarUrl={avatarUrl} email={user?.email} />
                 <button
                   onClick={handleLogout}
-                  className="p-2.5 rounded-full text-red-500 hover:bg-red-500/10 transition-colors"
+                  className="p-2.5 rounded-full shrink-0 text-red-500 hover:bg-red-500/10 transition-colors"
                   aria-label="Sign out"
                   title="Sign out"
                 >

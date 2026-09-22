@@ -4,7 +4,10 @@
 
 @layer base {
   :root {
-    color-scheme: light dark;
+    /* Follow the APP theme (not the OS) for native controls, <select> option
+       popups and scrollbars. Fixes white-on-white option lists when the app
+       is in dark mode while the OS stays light. */
+    color-scheme: light;
 
     /* Application background (dynamic themes override these at runtime). */
     --app-bg: linear-gradient(135deg, #f1f5f9 0%, #eff6ff 50%, #f1f5f9 100%);
@@ -12,6 +15,7 @@
   }
 
   .dark {
+    color-scheme: dark;
     --app-bg: linear-gradient(135deg, #0f172a 0%, #172554 50%, #0f172a 100%);
   }
 
@@ -72,5 +76,23 @@
   }
   .news-scroll::-webkit-scrollbar-thumb:hover {
     background: rgba(59, 130, 246, 0.6);
+  }
+
+  /* Native <select> option lists: explicit colors for the browsers that style
+     option popups from CSS, so options are never white-on-white. Covers every
+     select in the app (task status, project picker, roles, filters, presets). */
+  select option {
+    background-color: #ffffff;
+    color: #0f172a;
+  }
+  .dark select option {
+    background-color: #1e293b;
+    color: #f8fafc;
+  }
+
+  /* Apple-style polish: no gray tap flash on interactive elements. */
+  button,
+  a {
+    -webkit-tap-highlight-color: transparent;
   }
 }

@@ -3,21 +3,42 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Newspaper, ExternalLink, Loader2, AlertTriangle, Clock } from 'lucide-react'
 import { cn } from '../../lib/utils'
 
-// Reliable, no-key-required public proxy of the NewsAPI dataset.
-// Returns real, current headlines from top-tier sources (BBC, Reuters, CNN, etc).
-const NEWS_CATEGORIES = ['technology', 'science', 'general', 'business']
-const PROXY_URL = (category) =>
-  `https://saurav.tech/NewsAPI/top-headlines/category/${category}/in.json`
-
-// Optional RSS feeds (BBC, The Guardian, Daily Sabah) as a secondary source,
-// converted via the public RSS-to-JSON endpoint.
-const RSS_FEEDS = [
-  { url: 'http://feeds.bbci.co.uk/news/technology/rss.xml', category: 'Technology' },
-  { url: 'https://feeds.arstechnica.com/arstechnica/index', category: 'Technology' },
-  { url: 'http://feeds.bbci.co.uk/news/world/rss.xml', category: 'Geopolitics' },
-  { url: 'https://www.dailysabah.com/rss', category: 'Turkey' },
+// Keyless, CORS-friendly news sources (verified working from the browser):
+//  - Hacker News via the Algolia search API
+//  - dev.to's public articles API
+// Each source maps raw payloads into the shared article shape used by the feed.
+const SOURCES = [
+  {
+    url: 'https://hn.algolia.com/api/v1/search?tags=story&hitsPerPage=30',
+    parse: (data) =>
+      (Array.isArray(data?.hits) ? data.hits : [])
+        .filter((h) => h && h.title)
+        .map((h) => ({
+          title: h.title,
+          url: h.url || `https://news.ycombinator.com/item?id=${h.objectID}`,
+          description: stripHtml(h.story_text || ''),
+          source: 'Hacker News',
+          date: h.created_at || '',
+          image: null,
+          fallback: 'Technology',
+        })),
+  },
+  {
+    url: 'https://dev.to/api/articles?per_page=25',
+    parse: (data) =>
+      (Array.isArray(data) ? data : [])
+        .filter((a) => a && a.title)
+        .map((a) => ({
+          title: a.title,
+          url: a.url,
+          description: stripHtml(a.description || ''),
+          source: 'DEV Community',
+          date: a.published_at || '',
+          image: a.social_image || null,
+          fallback: 'Technology',
+        })),
+  },
 ]
-const RSS2JSON = 'https://api.rss2json.com/v1/api.json'
 
 // Keyword-based category detection derived from headline and content.
 const CATEGORY_RULES = [
@@ -32,12 +53,6 @@ const CATEGORY_RULES = [
 ]
 
 const FALLBACK_CATEGORY = 'General'
-const CATEGORY_TITLES = {
-  technology: 'Technology',
-  science: 'Science',
-  general: 'General',
-  business: 'Business',
-}
 
 function detectCategory(title, description, fallback) {
   const haystack = `${title || ''} ${description || ''}`.toLowerCase()
@@ -57,7 +72,7 @@ function formatDate(value) {
   if (!value) return ''
   const d = new Date(value)
   if (Number.isNaN(d.getTime())) return ''
-  return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 }
 
 function categoryColor(label) {
@@ -87,9 +102,9 @@ function categoryColor(label) {
 
 /**
  * NewsCard - Live vertical "Tech & World News" feed.
- * Aggregates real, current headlines from a no-key NewsAPI proxy plus
- * top-tier RSS sources, assigns each item a category badge dynamically from
- * the headline/content, and renders them in a clean vertical scrolling feed.
+ * Pulls current headlines from keyless, CORS-friendly sources (Hacker News
+ * via Algolia and dev.to), assigns each item a category badge dynamically
+ * from the headline/content, and renders them in a vertical scrolling feed.
  */
 export default function NewsCard() {
   const [articles, setArticles] = useState([])
@@ -98,53 +113,21 @@ export default function NewsCard() {
   useEffect(() => {
     let cancelled = false
 
-    async function fetchProxyCategory(category) {
-      const res = await fetch(PROXY_URL(category))
-      if (!res.ok) throw new Error('Proxy request failed')
-      const data = await res.json()
-      if (!data || !Array.isArray(data.articles)) throw new Error('Proxy returned no articles')
-      return data.articles
-        .filter((a) => a && a.title && a.title !== '[Removed]')
-        .map((a) => ({
-          title: a.title,
-          url: a.url,
-          description: stripHtml(a.description),
-          source: a.source?.name || 'News',
-          date: a.publishedAt || a.pubDate || '',
-          image: a.urlToImage || null,
-          fallback: CATEGORY_TITLES[category] || FALLBACK_CATEGORY,
-        }))
-    }
-
-    async function fetchRssFeed(feed) {
-      const url = `${RSS2JSON}?rss_url=${encodeURIComponent(feed.url)}&count=12`
-      const res = await fetch(url)
-      if (!res.ok) throw new Error('Feed request failed')
-      const data = await res.json()
-      if (data.status !== 'ok' || !data.items) throw new Error('Feed returned no items')
-      return data.items
-        .filter((a) => a && a.title && a.title !== '[Removed]')
-        .map((a) => ({
-          title: a.title,
-          url: a.link,
-          description: stripHtml(a.description),
-          source: a.author || feed.category,
-          date: a.pubDate || '',
-          image: a.enclosure?.link || null,
-          fallback: feed.category,
-        }))
-    }
-
     async function loadNews() {
-      const proxyPromises = NEWS_CATEGORIES.map(fetchProxyCategory)
-      const rssPromises = RSS_FEEDS.map(fetchRssFeed)
-      const results = await Promise.allSettled([...proxyPromises, ...rssPromises])
+      const results = await Promise.allSettled(
+        SOURCES.map(async (source) => {
+          const res = await fetch(source.url)
+          if (!res.ok) throw new Error('News request failed')
+          return source.parse(await res.json())
+        })
+      )
 
       if (cancelled) return
 
       const items = results
         .filter((r) => r.status === 'fulfilled')
         .flatMap((r) => r.value)
+        .filter((a) => a && a.title && a.title !== '[Removed]')
 
       if (items.length === 0) {
         setStatus('error')
