@@ -23,6 +23,16 @@ Planning is built for professionals who need a single, focused workspace to mana
 - Drag-and-drop Kanban board (Todo / In Progress / Done) per project, with priority flags and tag badges.
 - Task dependencies with "Blocked by" chips, a red Overdue badge on past-due tasks, and an admin notification.
 
+### Profile and Settings
+- Dedicated Profile page (`/profile`) for the public identity: bio, social links, and completed projects, reached from the avatar menu.
+- Settings holds private system configuration only: account details, profile photo, appearance, and the Theme Studio.
+
+### Dynamic Themes
+- Theme Studio in Settings offers five Blue/Slate background presets: Classic Slate, Sunrise, Clear Daylight, Dusk, and Midnight Blue.
+- Optional time-of-day matching rotates the background automatically for the current hour, re-evaluated once a minute.
+- Optional custom background image layered over the gradient; only http(s) URLs are accepted, and the value is validated before use.
+- Preferences persist per user in the `user_preferences` table; the resolved background is published as CSS variables so every surface stays consistent.
+
 ### Collaboration
 - Team tab per project with a secure, RPC-backed user search (match by email or full name) and Admin/Member roles.
 - Task assignment by dragging a member avatar from the palette onto a task, or via the assign popover; assignee avatars render below tasks in both List and Board views.
@@ -91,11 +101,11 @@ The frontend fetches data through small, focused custom hooks (`useProjects`, `u
     /projects      # TeamTab, TeamPalette (collaboration)
     /tasks         # TaskItem, TaskEditorModal, KanbanBoard, AssigneeAvatars
     /ui            # TopNav, Modal, RichTextEditor, Stopwatch
-  /contexts        # Auth and Theme providers
-  /hooks           # Data hooks (projects, tasks, time logs, media)
+  /contexts        # Auth, Theme, Preferences, Stopwatch providers
+  /hooks           # Data hooks (projects, tasks, time logs, media, notes, team)
   /layouts         # MainLayout (top navigation shell)
   /lib             # supabase client, utilities
-  /pages           # Dashboard, Projects, ProjectDetails, TaskView, MediaTracker, Settings
+  /pages           # Dashboard, Projects, ProjectDetails, TaskView, MediaTracker, Notes, Profile, Settings
 ```
 
 ## Getting Started

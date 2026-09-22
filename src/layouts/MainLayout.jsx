@@ -8,12 +8,24 @@ import QuickNotes from '../components/ui/QuickNotes'
  * Wraps page content with a top offset and Framer Motion page transitions.
  * The time-tracking stopwatch is scoped to the Dashboard page only.
  * The Quick Notes scratchpad (floating button + modal) is global.
+ *
+ * The page background is driven by the CSS variables published by the theme
+ * system (`--app-bg`, `--app-bg-image`), which support the time-of-day presets
+ * configured in Settings.
  */
 export default function MainLayout() {
   const location = useLocation()
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-br from-slate-100 via-blue-50 to-slate-100 dark:from-slate-900 dark:via-blue-950 dark:to-slate-900">
+    <div
+      className="min-h-screen flex flex-col bg-fixed transition-colors duration-500"
+      style={{
+        backgroundImage: 'var(--app-bg-image, none), var(--app-bg)',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+      }}
+    >
       {/* Floating top navigation */}
       <TopNav />
 

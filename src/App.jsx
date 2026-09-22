@@ -10,6 +10,7 @@ import TaskView from './pages/TaskView'
 import MediaTracker from './pages/MediaTracker'
 import Settings from './pages/Settings'
 import Notes from './pages/Notes'
+import Profile from './pages/Profile'
 
 /**
  * Main App component - Defines all application routes.
@@ -47,6 +48,7 @@ function App() {
         <Route path="/tasks" element={<TaskView />} />
         <Route path="/media" element={<MediaTracker />} />
         <Route path="/notes" element={<Notes />} />
+        <Route path="/profile" element={<Profile />} />
         <Route path="/settings" element={<Settings />} />
       </Route>
 

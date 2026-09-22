@@ -5,17 +5,21 @@ import { Toaster } from 'react-hot-toast'
 import './index.css'
 import App from './App.jsx'
 import { AuthProvider } from './contexts/AuthContext'
+import { PreferencesProvider } from './contexts/PreferencesContext'
 import { ThemeProvider } from './contexts/ThemeContext'
 import { StopwatchProvider } from './contexts/StopwatchContext'
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <BrowserRouter>
-      <ThemeProvider>
-        <AuthProvider>
-          <StopwatchProvider>
-            <App />
-          </StopwatchProvider>
+      <AuthProvider>
+        <PreferencesProvider>
+          <ThemeProvider>
+            <StopwatchProvider>
+              <App />
+            </StopwatchProvider>
+          </ThemeProvider>
+        </PreferencesProvider>
           <Toaster
             position="top-right"
             toastOptions={{
@@ -35,7 +39,6 @@ createRoot(document.getElementById('root')).render(
             }}
           />
         </AuthProvider>
-      </ThemeProvider>
     </BrowserRouter>
   </StrictMode>,
 )

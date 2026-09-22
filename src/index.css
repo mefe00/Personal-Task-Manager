@@ -5,6 +5,14 @@
 @layer base {
   :root {
     color-scheme: light dark;
+
+    /* Application background (dynamic themes override these at runtime). */
+    --app-bg: linear-gradient(135deg, #f1f5f9 0%, #eff6ff 50%, #f1f5f9 100%);
+    --app-bg-image: none;
+  }
+
+  .dark {
+    --app-bg: linear-gradient(135deg, #0f172a 0%, #172554 50%, #0f172a 100%);
   }
 
   body {
