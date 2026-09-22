@@ -26,6 +26,10 @@ export default function TaskEditorModal({
   parentId = null,
   onCreate,
   onUpdate,
+  availableTasks = [],            // [{ id, title }] eligible "Depends On" targets
+  existingDependencies = [],      // [depends_on_task_id] already linked
+  onAssignDependency = () => {},
+  onRemoveDependency = () => {},
 }) {
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
@@ -33,12 +37,18 @@ export default function TaskEditorModal({
   const [tags, setTags] = useState('')
   const [dueDate, setDueDate] = useState('')
   const [timeSlot, setTimeSlot] = useState('')
-  const [kanbanStatus, setKanbanStatus] = useState('todo')
+    const [kanbanStatus, setKanbanStatus] = useState('todo')
+  const [dependents, setDependents] = useState([])   // [depends_on_task_id]
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
+  // Stable primitive key for the dependency list. The parent recreates the
+  // existingDependencies array on every render, so depending on the array
+  // itself would needlessly re-run the reset effect below (wiping the form).
+  const existingDepsKey = (existingDependencies || []).join('|')
+
   // Reset the form whenever the modal opens or the target task changes
-  /* eslint-disable react-hooks/set-state-in-effect */
+  /* eslint-disable react-hooks/set-state-in-effect, react-hooks/exhaustive-deps */
   useEffect(() => {
     if (isOpen) {
       setTitle(task?.title || '')
@@ -47,11 +57,12 @@ export default function TaskEditorModal({
       setTags((task?.tags || []).join(', '))
       setDueDate(task?.due_date || '')
       setTimeSlot(task?.time_slot || '')
-      setKanbanStatus(task?.kanban_status || 'todo')
+            setKanbanStatus(task?.kanban_status || 'todo')
+      setDependents(existingDependencies || [])
       setError('')
     }
-  }, [isOpen, task])
-  /* eslint-enable react-hooks/set-state-in-effect */
+  }, [isOpen, task, existingDepsKey])
+  /* eslint-enable react-hooks/set-state-in-effect, react-hooks/exhaustive-deps */
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -70,7 +81,7 @@ export default function TaskEditorModal({
       due_date: dueDate || null,
       time_slot: timeSlot || null,
       kanban_status: kanbanStatus,
-    }
+        }
 
     setSaving(true)
     const result =
@@ -84,6 +95,23 @@ export default function TaskEditorModal({
       setError(msg)
       toast.error('Failed to save task')
       return
+    }
+
+    // Reconcile dependencies: add any newly selected, remove any unselected.
+    const existing = existingDependencies || []
+    const toAdd = dependents.filter((id) => !existing.includes(id))
+    const toRemove = existing.filter((id) => !dependents.includes(id))
+
+    // For create mode, the task id is returned by the hook; for edit mode use task.id.
+    const savedId = result?.data?.[0]?.id || result?.data?.id || task?.id
+
+    if (savedId) {
+      for (const depId of toAdd) {
+        await onAssignDependency(savedId, depId)
+      }
+      for (const depId of toRemove) {
+        await onRemoveDependency(savedId, depId)
+      }
     }
 
     toast.success(mode === 'edit' ? 'Task updated!' : 'Task created!')
@@ -198,6 +226,59 @@ export default function TaskEditorModal({
               <option value="in_progress">In Progress</option>
               <option value="done">Done</option>
             </select>
+          </div>
+                )}
+
+        {/* Depends On (project tasks, all modes) */}
+        {isProjectTask && (
+          <div>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+              Depends On
+            </label>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">
+              Select one or more tasks that must be completed before this one.
+            </p>
+            <div className="space-y-1 max-h-44 overflow-y-auto rounded-xl bg-white/50 dark:bg-white/10 border border-white/30 dark:border-white/20 p-2">
+              {availableTasks
+                .filter((t) => t.id !== task?.id)
+                .map((t) => {
+                  const checked = dependents.includes(t.id)
+                  return (
+                    <label
+                      key={t.id}
+                      className="flex items-center gap-2 p-1.5 rounded-lg hover:bg-white/50 dark:hover:bg-white/10 cursor-pointer transition-colors"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        onChange={(e) => {
+                          const next = e.target.checked
+                            ? [...dependents, t.id]
+                            : dependents.filter((id) => id !== t.id)
+                          setDependents(next)
+                        }}
+                        className="w-4 h-4 rounded border-white/30 dark:border-white-20 text-neon-purple focus:ring-neon-purple/50"
+                      />
+                      <span
+                        className={cn(
+                          'text-sm truncate flex-1',
+                          checked
+                            ? 'text-slate-900 dark:text-white font-medium'
+                            : 'text-slate-600 dark:text-slate-300'
+                        )}
+                        title={t.title}
+                      >
+                        {t.title}
+                      </span>
+                    </label>
+                  )
+                })}
+              {availableTasks.filter((t) => t.id !== task?.id).length === 0 && (
+                <p className="text-xs text-slate-400 dark:text-slate-500 px-1 py-2">
+                  No other tasks available in this project.
+                </p>
+              )}
+            </div>
           </div>
         )}
 

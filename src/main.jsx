@@ -6,13 +6,16 @@ import './index.css'
 import App from './App.jsx'
 import { AuthProvider } from './contexts/AuthContext'
 import { ThemeProvider } from './contexts/ThemeContext'
+import { StopwatchProvider } from './contexts/StopwatchContext'
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <BrowserRouter>
       <ThemeProvider>
         <AuthProvider>
-          <App />
+          <StopwatchProvider>
+            <App />
+          </StopwatchProvider>
           <Toaster
             position="top-right"
             toastOptions={{

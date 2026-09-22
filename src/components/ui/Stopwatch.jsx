@@ -1,31 +1,20 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
 import { motion } from 'framer-motion'
-import { Play, Pause, Square, Timer } from 'lucide-react'
+import { Play, Pause, Square, Timer, RotateCcw } from 'lucide-react'
 import toast from 'react-hot-toast'
-import { useTimeLogs } from '../../hooks/useTimeLogs'
+import { useStopwatch } from '../../contexts/StopwatchContext'
 import { cn } from '../../lib/utils'
 
 /**
  * Stopwatch - Time-tracking card for the Dashboard.
  * Shows a live 00:00:00 timer with Play / Pause / Stop-Save controls.
  * When stopped, the elapsed time is saved to the `time_logs` table
- * for the current date. Renders as a static card (no floating overlay).
+ * for the current date.
+ *
+ * State lives in the global StopwatchContext so the timer keeps ticking
+ * even when the user navigates away from the Dashboard.
  */
 export default function Stopwatch() {
-  const { saveTime } = useTimeLogs()
-  const [running, setRunning] = useState(false)
-  const [elapsed, setElapsed] = useState(0) // in seconds
-  const [saving, setSaving] = useState(false)
-  const intervalRef = useRef(null)
-
-  // Keep time when running
-  useEffect(() => {
-    if (!running) return
-    intervalRef.current = setInterval(() => {
-      setElapsed((prev) => prev + 1)
-    }, 1000)
-    return () => clearInterval(intervalRef.current)
-  }, [running])
+  const { elapsed, running, saving, toggle, reset, saveCurrent } = useStopwatch()
 
   const formatTime = (totalSeconds) => {
     const h = Math.floor(totalSeconds / 3600)
@@ -35,26 +24,14 @@ export default function Stopwatch() {
     return `${pad(h)}:${pad(m)}:${pad(s)}`
   }
 
-  const togglePlay = () => {
-    setRunning((prev) => !prev)
-  }
-
-  const handleSave = useCallback(async () => {
-    if (elapsed <= 0) return
-
-    setSaving(true)
-    const { error } = await saveTime(elapsed)
-    setSaving(false)
-
+  const handleSave = async () => {
+    const { error, seconds } = await saveCurrent()
     if (error) {
       toast.error(`Couldn't save time: ${error.message || error}`)
-      return
+    } else if (seconds) {
+      toast.success(`Saved ${formatTime(seconds)} to your log`)
     }
-
-    toast.success(`Saved ${formatTime(elapsed)} to your log`)
-    setRunning(false)
-    setElapsed(0)
-  }, [elapsed, saveTime])
+  }
 
   return (
     <motion.div
@@ -68,6 +45,12 @@ export default function Stopwatch() {
           <Timer className="w-4 h-4" />
         </div>
         <h2 className="text-lg font-bold text-slate-900 dark:text-white">Time Tracker</h2>
+        {running && (
+          <span className="ml-auto flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-red-500/10 text-red-500 text-xs font-semibold">
+            <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
+            Ticking
+          </span>
+        )}
       </div>
 
       {/* Time display */}
@@ -86,7 +69,7 @@ export default function Stopwatch() {
         <motion.button
           whileHover={{ scale: 1.03 }}
           whileTap={{ scale: 0.97 }}
-          onClick={togglePlay}
+          onClick={toggle}
           className={cn(
             'flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-white font-semibold transition-all',
             running ? 'bg-gradient-to-r from-amber-500 to-orange-500' : 'bg-gradient-to-r from-blue-500 to-blue-600'
@@ -105,7 +88,19 @@ export default function Stopwatch() {
           aria-label="Stop and save"
         >
           <Square className="w-4 h-4" />
-          Save
+          {saving ? 'Saving…' : 'Save'}
+        </motion.button>
+
+        <motion.button
+          whileHover={{ scale: 1.03 }}
+          whileTap={{ scale: 0.97 }}
+          onClick={reset}
+          disabled={elapsed <= 0}
+          aria-label="Reset stopwatch"
+          title="Reset"
+          className="flex items-center justify-center w-12 py-2.5 rounded-xl bg-white/40 dark:bg-white/5 border border-white/20 dark:border-white/10 text-slate-600 dark:text-slate-300 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+        >
+          <RotateCcw className="w-4 h-4" />
         </motion.button>
       </div>
     </motion.div>

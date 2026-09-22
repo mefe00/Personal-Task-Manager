@@ -1,7 +1,8 @@
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd'
-import { Flag, Sun, Pencil } from 'lucide-react'
+import { Flag, Sun, Pencil, Link2 } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { cn } from '../../lib/utils'
+import AssigneeAvatars from './AssigneeAvatars'
 
 const COLUMNS = [
   { id: 'todo', label: 'To Do', dot: 'bg-blue-500' },
@@ -18,7 +19,18 @@ const COLUMNS = [
  *  - onAddToToday(taskId): quick "Add to Today" action
  *  - onEditTask(task): open the task editor
  */
-export default function KanbanBoard({ tasks, onUpdateKanbanStatus, onAddToToday, onEditTask }) {
+export default function KanbanBoard({
+  tasks,
+  onUpdateKanbanStatus,
+  onAddToToday,
+  onEditTask,
+  assignments = {},
+  dependencies = {},
+  members = [],
+  isAdmin = false,
+  onAssign = () => {},
+  onUnassign = () => {},
+}) {
   const getColumnTasks = (status) =>
     tasks.filter((t) => (t.kanban_status || 'todo') === status)
 
@@ -97,7 +109,30 @@ export default function KanbanBoard({ tasks, onUpdateKanbanStatus, onAddToToday,
                                   </span>
                                 ))}
                               </div>
+                                                        )}
+
+                            {/* Dependencies ("is blocked by") */}
+                            {(dependencies[task.id] || []).length > 0 && (
+                              <div className="mb-1">
+                                <span
+                                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 text-xs font-medium"
+                                  title={`Blocked by: ${(dependencies[task.id] || []).map((d) => d.title).join(', ')}`}
+                                >
+                                  <Link2 className="w-3 h-3" />
+                                  Blocked by {(dependencies[task.id] || []).length}
+                                </span>
+                              </div>
                             )}
+
+                            {/* Assignees (avatar boxes) + admin drop zone */}
+                            <AssigneeAvatars
+                              taskId={task.id}
+                              assignees={assignments[task.id] || []}
+                              members={members}
+                              isAdmin={isAdmin}
+                              onAssign={onAssign}
+                              onUnassign={onUnassign}
+                            />
 
                             {/* Quick actions */}
                             <div className="flex items-center justify-end gap-1">

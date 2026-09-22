@@ -21,6 +21,13 @@ Planning is built for professionals who need a single, focused workspace to mana
 - Contextual task editor: Tags and Kanban board status fields are hidden for standalone (non-project) tasks.
 - Quick read-only description viewer to inspect a task's rich-text description without entering edit mode.
 - Drag-and-drop Kanban board (Todo / In Progress / Done) per project, with priority flags and tag badges.
+- Task dependencies with "Blocked by" chips, a red Overdue badge on past-due tasks, and an admin notification.
+
+### Collaboration
+- Team tab per project with a secure, RPC-backed user search (match by email or full name) and Admin/Member roles.
+- Task assignment by dragging a member avatar from the palette onto a task, or via the assign popover; assignee avatars render below tasks in both List and Board views.
+- Overdue monitoring: past-due tasks show a red badge, the project header shows an overdue counter, and the project admin receives an in-app notification.
+- Quick Notes scratchpad with instant localStorage persistence, "Send to Project" delivery into the `project_notes` table, and a global Notes page for every captured note.
 
 ### Rich-Text Descriptions
 - Notion-style rich-text editor powered by Tiptap for task descriptions.
@@ -81,7 +88,8 @@ The frontend fetches data through small, focused custom hooks (`useProjects`, `u
   /components
     /auth          # Authentication guards
     /dashboard     # Weather and News feed cards
-    /tasks         # TaskItem, TaskEditorModal, KanbanBoard
+    /projects      # TeamTab, TeamPalette (collaboration)
+    /tasks         # TaskItem, TaskEditorModal, KanbanBoard, AssigneeAvatars
     /ui            # TopNav, Modal, RichTextEditor, Stopwatch
   /contexts        # Auth and Theme providers
   /hooks           # Data hooks (projects, tasks, time logs, media)
@@ -97,12 +105,52 @@ The frontend fetches data through small, focused custom hooks (`useProjects`, `u
 - A Supabase project
 
 ### Database Setup
-Run the SQL scripts in the Supabase SQL Editor in order:
+The full backend schema is applied with one idempotent script. Open the Supabase SQL Editor and run either:
+
+- `supabase_setup_all.sql` - the complete setup in a single file (recommended), or
+- the individual scripts below, in order.
 
 1. `supabase_schema.sql` - base schema (profiles, projects, tasks) with RLS policies.
 2. `phase6_sql_updates.sql` - storage buckets, cover images, and the `time_logs` table.
 3. `phase7_sql_updates.sql` - Kanban status, priority, and tags columns on tasks.
 4. `phase8_sql_updates.sql` - the `media_tracker` table with RLS policies.
+5. `task2_sql_updates.sql` - the `project_notes` table used by the Quick Notes scratchpad.
+6. `phase9_sql_updates.sql` - collaboration tables (`project_members`, `task_assignments`, `task_dependencies`) and `user_preferences`.
+7. `phase9_task4_invite_support.sql` - `profiles.email`, the authenticated profile directory policy, and the secure `search_users` RPC used by the Team tab search bar.
+
+All of these scripts are idempotent: every policy, trigger, table, column, index, and function is created with a guard (`IF NOT EXISTS`, `DROP ... IF EXISTS`, or `CREATE OR REPLACE`), so they can be re-run at any time and will repair a partially applied database without raising `already exists` errors.
+
+The optional scheduled-email setup is separate: `cron_notifications_setup.sql` requires the `pg_cron` and `pg_net` extensions plus a deployed `send-daily-summary` Edge Function, and it needs your project ref and service-role key pasted in before running.
+
+### Applying SQL from the Terminal (optional)
+Instead of pasting scripts into the SQL Editor, migrations can be applied with the helper script. Add the connection string (Dashboard -> Project Settings -> Database -> Connection string -> URI) to `.env`, which is gitignored:
+
+```env
+SUPABASE_DB_URL=postgresql://postgres.YOUR_PROJECT_REF:YOUR_DB_PASSWORD@aws-0-YOUR_REGION.pooler.supabase.com:5432/postgres
+```
+
+Then run:
+
+```bash
+./run-supabase-sql.sh supabase_setup_all.sql --verify
+```
+
+The script applies the file through `psql` inside a throwaway `postgres:16-alpine` container (no local PostgreSQL client required) and never prints the connection string. Because it is not `VITE_`-prefixed, Vite never exposes it to the browser.
+
+#### Finding the connection string in the Supabase Dashboard
+
+1. Open your project, then click the green **Connect** button in the top bar (or go to **Project Settings -> Database**).
+2. Choose **Session pooler** - this string works over IPv4. Use **Direct connection** only if your network supports IPv6.
+3. Keep the **URI** tab selected and copy the string. It looks like:
+
+   ```
+   postgresql://postgres.<project-ref>:[YOUR-PASSWORD]@aws-0-<region>.pooler.supabase.com:5432/postgres
+   ```
+
+4. Replace `[YOUR-PASSWORD]` with your database password. If you do not have it, use **Reset database password** first and copy the generated value (this does not affect the deployed app, which uses the anon key).
+5. Paste the completed string after `SUPABASE_DB_URL=` in `.env`.
+
+If the password contains reserved URI characters (`@ : / ? # & %`), percent-encode them (`@` becomes `%40`, `:` becomes `%3A`, `/` becomes `%2F`, `#` becomes `%23`, `?` becomes `%3F`, `&` becomes `%26`, `%` becomes `%25`), or reset the password to letters and numbers only.
 
 ### Environment Configuration
 Copy `.env.example` to `.env` and fill in your Supabase credentials:

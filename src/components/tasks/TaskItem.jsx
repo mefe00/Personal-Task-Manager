@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ChevronRight, Calendar, Plus, Trash2, Clock, Sun, CalendarX2, Pencil, Flag, Eye } from 'lucide-react'
+import { ChevronRight, Calendar, Plus, Trash2, Clock, Sun, CalendarX2, Pencil, Flag, Eye, AlertTriangle, Link2 } from 'lucide-react'
+import AssigneeAvatars from './AssigneeAvatars'
 import toast from 'react-hot-toast'
 import { cn } from '../../lib/utils'
 
@@ -22,8 +23,14 @@ export default function TaskItem({
   onToggleCascade,
   onAddSubTask,
   onUpdateTask,
-  onDeleteTask,
+    onDeleteTask,
   onEditTask,
+  assignments = {},
+  dependencies = {},
+  members = [],
+  isAdmin = false,
+  onAssign = () => {},
+  onUnassign = () => {},
 }) {
   const [expanded, setExpanded] = useState(true)
   const [addingSubTask, setAddingSubTask] = useState(false)
@@ -45,7 +52,13 @@ export default function TaskItem({
   }
   const todayStr = toLocalDateString(new Date())
   // Task is "on today" when it has a due_date equal to today
-  const isDueToday = Boolean(task.due_date) && task.due_date === todayStr
+    const isDueToday = Boolean(task.due_date) && task.due_date === todayStr
+
+  // A task is overdue when it has a past due_date and is not yet complete
+  const isOverdue =
+    !task.status &&
+    Boolean(task.due_date) &&
+    new Date(task.due_date + 'T00:00:00') < new Date(todayStr + 'T00:00:00')
 
   /**
    * Handle checkbox toggle - optionally cascade to children
@@ -301,6 +314,20 @@ export default function TaskItem({
             </span>
           )}
 
+                    {isOverdue && (
+            <motion.span
+              initial={{ scale: [1, 1.08, 1] }}
+              animate={{ rotate: [0, 1.5, -1.5, 0] }}
+              transition={{ repeat: Infinity, duration: 4, repeatType: 'reverse' }}
+              className="flex items-center gap-1 px-2.5 py-0.5 rounded-md bg-red-500/20 text-red-500 text-xs font-semibold shrink-0"
+              title="This task is overdue"
+              aria-label="Overdue task"
+            >
+              <AlertTriangle className="w-3.5 h-3.5" />
+              Overdue
+            </motion.span>
+          )}
+
           {/* Action buttons */}
           <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
             {/* Calendar / schedule */}
@@ -382,6 +409,31 @@ export default function TaskItem({
             </motion.button>
           </div>
         </div>
+
+                {/* Assignees (avatar boxes) + admin drop zone */}
+        <AssigneeAvatars
+          taskId={task.id}
+          assignees={assignments[task.id] || []}
+          members={members}
+          isAdmin={isAdmin}
+          onAssign={onAssign}
+          onUnassign={onUnassign}
+        />
+
+        {/* Dependencies ("is blocked by") */}
+        {(dependencies[task.id] || []).length > 0 && (
+          <div className="mt-1 pl-1">
+            <span
+              className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 text-xs font-medium"
+              title={`Blocked by: ${(dependencies[task.id] || []).map((d) => d.title).join(', ')}`}
+            >
+              <Link2 className="w-3 h-3 shrink-0" />
+              <span className="max-w-[280px] truncate">
+                Blocked by: {(dependencies[task.id] || []).map((d) => d.title).join(', ')}
+              </span>
+            </span>
+          </div>
+        )}
 
         {/* Read-only expandable description */}
         <AnimatePresence>
@@ -507,6 +559,12 @@ export default function TaskItem({
                     onUpdateTask={onUpdateTask}
                     onDeleteTask={onDeleteTask}
                     onEditTask={onEditTask}
+                    assignments={assignments}
+                    dependencies={dependencies}
+                    members={members}
+                    isAdmin={isAdmin}
+                    onAssign={onAssign}
+                    onUnassign={onUnassign}
                   />
                 ))}
               </div>

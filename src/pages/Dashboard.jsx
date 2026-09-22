@@ -290,6 +290,67 @@ export default function Dashboard() {
             </motion.div>
           </div>
 
+          {/* ===== Today's Agenda ===== */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="bg-glass-light dark:bg-glass-dark backdrop-blur-xl border border-white/20 dark:border-white/10 shadow-glass rounded-2xl p-6 mb-8"
+          >
+            <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-4">
+              Today's Agenda
+            </h2>
+
+            {analytics.todaysAgenda.length === 0 ? (
+              <p className="text-slate-500 dark:text-slate-400 text-sm py-8 text-center">
+                No tasks due today. Enjoy the calm.
+              </p>
+            ) : (
+              <div className="space-y-2">
+                {analytics.todaysAgenda.map((task) => (
+                  <div
+                    key={task.id}
+                    className={cn(
+                      'flex items-center gap-3 px-4 py-3 rounded-xl',
+                      'bg-white/40 dark:bg-white/5 border border-white/20 dark:border-white/10',
+                      task.status && 'opacity-60'
+                    )}
+                  >
+                    {/* Time slot */}
+                    <span className="flex items-center justify-center w-16 shrink-0 text-sm font-semibold text-blue-500 dark:text-blue-400">
+                      {task.time_slot ? task.time_slot.slice(0, 5) : '—'}
+                    </span>
+
+                    {/* Status dot */}
+                    <span
+                      className={cn(
+                        'w-2.5 h-2.5 rounded-full shrink-0',
+                        task.status ? 'bg-neon-green' : 'bg-neon-purple'
+                      )}
+                    />
+
+                    {/* Title */}
+                    <span
+                      className={cn(
+                        'flex-1 text-sm font-medium text-slate-800 dark:text-slate-200',
+                        task.status && 'line-through text-slate-400 dark:text-slate-500'
+                      )}
+                    >
+                      {task.title}
+                    </span>
+
+                    {/* Project badge if linked */}
+                    {task.project_id && (
+                      <span className="px-2 py-0.5 rounded-md bg-blue-500/10 text-blue-600 dark:text-blue-400 text-xs font-medium">
+                        Project
+                      </span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </motion.div>
+
           {/* ===== Live Widgets (Timer, Weather) ===== */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
             <Stopwatch />
@@ -430,67 +491,6 @@ export default function Dashboard() {
                 </BarChart>
               </ResponsiveContainer>
             </div>
-          </motion.div>
-
-          {/* ===== Today's Agenda ===== */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.35 }}
-            className="bg-glass-light dark:bg-glass-dark backdrop-blur-xl border border-white/20 dark:border-white/10 shadow-glass rounded-2xl p-6"
-          >
-            <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-4">
-              Today's Agenda
-            </h2>
-
-            {analytics.todaysAgenda.length === 0 ? (
-              <p className="text-slate-500 dark:text-slate-400 text-sm py-8 text-center">
-                No tasks due today. Enjoy the calm.
-              </p>
-            ) : (
-              <div className="space-y-2">
-                {analytics.todaysAgenda.map((task) => (
-                  <div
-                    key={task.id}
-                    className={cn(
-                      'flex items-center gap-3 px-4 py-3 rounded-xl',
-                      'bg-white/40 dark:bg-white/5 border border-white/20 dark:border-white/10',
-                      task.status && 'opacity-60'
-                    )}
-                  >
-                    {/* Time slot */}
-                    <span className="flex items-center justify-center w-16 shrink-0 text-sm font-semibold text-neon-cyan">
-                      {task.time_slot ? task.time_slot.slice(0, 5) : '—'}
-                    </span>
-
-                    {/* Status dot */}
-                    <span
-                      className={cn(
-                        'w-2.5 h-2.5 rounded-full shrink-0',
-                        task.status ? 'bg-neon-green' : 'bg-neon-purple'
-                      )}
-                    />
-
-                    {/* Title */}
-                    <span
-                      className={cn(
-                        'flex-1 text-sm font-medium text-slate-800 dark:text-slate-200',
-                        task.status && 'line-through text-slate-400 dark:text-slate-500'
-                      )}
-                    >
-                      {task.title}
-                    </span>
-
-                    {/* Project badge if linked */}
-                    {task.project_id && (
-                      <span className="px-2 py-0.5 rounded-md bg-neon-purple/10 text-neon-purple text-xs font-medium">
-                        Project
-                      </span>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
           </motion.div>
         </>
       )}

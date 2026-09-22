@@ -23,8 +23,19 @@ dist-ssr
 10_PHASE_*.md
 AI_REPORT_PHASE_*.md
 supabase_schema.sql
-phase*_sql_updates.sql
+*_sql_updates.sql
+phase9_task4_invite_support.sql
+supabase_setup_all.sql
 cron_notifications_setup.sql
+SQL_report.md
+
+# Local database / launch tooling (personal setup helpers)
+run-supabase-sql.sh
+start-web-planlama.sh
+
+# Agent tooling (local skill bundle)
+.agents/
+skills-lock.json
 
 # Editor directories and files
 .vscode/*
