@@ -119,7 +119,10 @@ export default function TopNav() {
   return (
     <>
       {/* ===== Floating pill navbar ===== */}
-      <nav className="fixed top-4 left-1/2 -translate-x-1/2 z-40 w-[calc(100%-2rem)] max-w-4xl">
+      {/* Floating pill navbar — width hugs its content so there is no dead
+          space between the last link and the controls (keeps the avatar from
+          being pushed to the far right); the max-w keeps a viewport margin. */}
+      <nav className="fixed top-4 left-1/2 -translate-x-1/2 z-40 w-auto max-w-[calc(100%-2rem)]">
         <motion.div
           initial={{ y: -20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
